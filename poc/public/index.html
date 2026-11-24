@@ -5,67 +5,101 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Nordisk Bilförsäkring – Car insurance price calculator</title>
 <style>
-  :root { --navy:#14213d; --gold:#e8a23d; --bg:#f5f4ef; --card:#fff; --mut:#5b6577; --ok:#1c7c54; --warn:#b36b00; --bad:#b3261e; --line:#e3e1d8; }
+  :root { --ink:#16213a; --mut:#6b7385; --bg:#fafaf8; --card:#fff; --line:#ececE6; --accent:#16213a; --gold:#e8a23d; --ok:#1c7c54; --warn:#b36b00; --bad:#b3261e; }
   * { box-sizing: border-box; }
-  body { margin:0; font:15px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif; background:var(--bg); color:var(--navy); }
-  header { background:var(--navy); color:#fff; padding:18px 28px; display:flex; align-items:baseline; gap:16px; }
-  header h1 { margin:0; font-size:20px; } header span { color:#aab4c8; font-size:13px; }
-  nav { display:flex; gap:4px; padding:0 28px; background:var(--navy); }
-  nav button { background:none; border:0; color:#aab4c8; padding:10px 16px; cursor:pointer; font:inherit; border-bottom:3px solid transparent; }
-  nav button.on { color:#fff; border-color:var(--gold); }
-  main { max-width:1100px; margin:24px auto; padding:0 20px; }
-  .card { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:20px; margin-bottom:18px; }
-  .row { display:flex; gap:14px; flex-wrap:wrap; align-items:flex-end; }
-  label { display:flex; flex-direction:column; font-size:12px; color:var(--mut); gap:4px; flex:1; min-width:170px; }
-  input, select { font:inherit; padding:9px 11px; border:1px solid #c9c6ba; border-radius:8px; color:var(--navy); background:#fff; }
-  button.primary { background:var(--gold); color:var(--navy); border:0; padding:10px 22px; border-radius:8px; font:inherit; font-weight:600; cursor:pointer; }
-  button.chip { background:#eef0f5; color:var(--navy); border:0; padding:5px 10px; border-radius:14px; font-size:12px; cursor:pointer; }
-  button.chip:hover { background:#dfe3ec; }
-  .chips { display:flex; gap:6px; flex-wrap:wrap; margin-top:12px; align-items:center; font-size:12px; color:var(--mut); }
-  .result { border-left:6px solid var(--ok); }
-  .result.MANUELL { border-color:var(--warn); } .result.AVSLAG { border-color:var(--bad); }
-  .price { font-size:44px; font-weight:700; letter-spacing:-1px; } .price small { font-size:16px; font-weight:500; color:var(--mut); }
-  .tag { display:inline-block; font-size:11px; text-transform:uppercase; letter-spacing:.06em; padding:2px 8px; border-radius:10px; color:#fff; background:var(--ok); }
+  body { margin:0; font:15px/1.55 system-ui, -apple-system, "Segoe UI", sans-serif; background:var(--bg); color:var(--ink); }
+  header { max-width:1000px; margin:0 auto; padding:22px 24px; display:flex; align-items:center; justify-content:space-between; gap:16px; flex-wrap:wrap; }
+  .brand { font-weight:700; letter-spacing:-.01em; font-size:17px; }
+  .brand i { display:inline-block; width:9px; height:9px; border-radius:50%; background:var(--gold); margin-right:8px; }
+  nav { display:flex; gap:22px; }
+  nav button { background:none; border:0; color:var(--mut); padding:6px 0; cursor:pointer; font:inherit; border-bottom:2px solid transparent; }
+  nav button:hover { color:var(--ink); }
+  nav button.on { color:var(--ink); border-color:var(--gold); }
+  main { max-width:1000px; margin:0 auto; padding:8px 24px 64px; }
+  .narrow { max-width:640px; margin:0 auto; }
+  .hero { text-align:center; padding:28px 0 22px; }
+  .hero h1 { margin:0 0 8px; font-size:32px; letter-spacing:-.02em; line-height:1.2; }
+  .hero p { margin:0; color:var(--mut); }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:14px; padding:24px; margin-bottom:16px; }
+  form { display:grid; gap:14px; }
+  label { display:flex; flex-direction:column; font-size:13px; color:var(--mut); gap:6px; }
+  input, select { font:inherit; padding:11px 13px; border:1px solid #d9d9d1; border-radius:10px; color:var(--ink); background:#fff; width:100%; }
+  input:focus, select:focus { outline:2px solid var(--gold); outline-offset:1px; border-color:transparent; }
+  .two { display:grid; grid-template-columns:1fr 1fr; gap:14px; } @media (max-width:560px){ .two{grid-template-columns:1fr;} }
+  button.primary { background:var(--accent); color:#fff; border:0; padding:13px 22px; border-radius:10px; font:inherit; font-weight:600; cursor:pointer; }
+  button.primary:hover { background:#25335a; }
+  button.chip { background:#f1f1ec; color:var(--ink); border:0; padding:5px 11px; border-radius:14px; font-size:12px; cursor:pointer; }
+  button.chip:hover { background:#e6e6df; }
+  details.examples { margin-top:16px; font-size:13px; color:var(--mut); }
+  details.examples summary { cursor:pointer; }
+  details.examples > div { display:flex; gap:8px; flex-wrap:wrap; align-items:center; margin-top:10px; }
+  details.examples select { width:auto; padding:5px 8px; font-size:13px; }
+  .result { text-align:center; padding:32px 24px; }
+  .tag { display:inline-block; font-size:11px; text-transform:uppercase; letter-spacing:.08em; padding:3px 10px; border-radius:10px; color:#fff; background:var(--ok); }
   .MANUELL .tag { background:var(--warn); } .AVSLAG .tag { background:var(--bad); }
-  h2 { font-size:16px; margin:0 0 10px; } h3 { font-size:13px; text-transform:uppercase; letter-spacing:.05em; color:var(--mut); margin:18px 0 8px; }
-  table { border-collapse:collapse; width:100%; font-size:13.5px; } th, td { text-align:left; padding:7px 10px; border-bottom:1px solid var(--line); } th { color:var(--mut); font-weight:600; font-size:12px; }
-  td.n, th.n { text-align:right; font-variant-numeric:tabular-nums; }
-  .f { display:inline-block; min-width:62px; text-align:center; padding:1px 8px; border-radius:10px; font-size:12px; font-weight:600; }
-  .up { background:#fde8e6; color:var(--bad); } .down { background:#e2f4ea; color:var(--ok); } .flat { background:#eef0f5; color:var(--mut); }
-  .grid { display:grid; grid-template-columns:1fr 1fr; gap:18px; } @media (max-width:800px){ .grid{grid-template-columns:1fr;} }
+  .price { font-size:56px; font-weight:700; letter-spacing:-.03em; line-height:1.1; margin:14px 0 4px; } .price small { font-size:16px; font-weight:500; color:var(--mut); letter-spacing:0; }
+  .result p { margin:8px auto 0; max-width:480px; color:var(--mut); }
+  h2 { font-size:17px; margin:0 0 12px; letter-spacing:-.01em; } h3 { font-size:12px; text-transform:uppercase; letter-spacing:.06em; color:var(--mut); margin:4px 0 8px; }
+  table { border-collapse:collapse; width:100%; font-size:14px; } th, td { text-align:left; padding:9px 8px; border-bottom:1px solid var(--line); vertical-align:top; } th { color:var(--mut); font-weight:500; font-size:12px; } tr:last-child td { border-bottom:0; }
+  td.n, th.n { text-align:right; font-variant-numeric:tabular-nums; white-space:nowrap; }
+  .f { display:inline-block; min-width:56px; text-align:center; padding:1px 8px; border-radius:10px; font-size:12px; font-weight:600; }
+  .up { background:#fde8e6; color:var(--bad); } .down { background:#e2f4ea; color:var(--ok); } .flat { background:#f1f1ec; color:var(--mut); }
+  .grid { display:grid; grid-template-columns:1fr 1fr; gap:24px; } @media (max-width:800px){ .grid{grid-template-columns:1fr;} }
   .mut { color:var(--mut); font-size:13px; }
-  .bar { height:10px; border-radius:5px; background:#eef0f5; overflow:hidden; display:flex; margin:6px 0; } .bar i { display:block; height:100%; }
-  code { background:#eef0f5; padding:1px 5px; border-radius:4px; font-size:12.5px; }
-  .warnbox { background:#fff6e0; border:1px solid #f0d9a0; border-radius:8px; padding:10px 12px; font-size:13px; margin-top:12px; }
+  .bar { height:8px; border-radius:4px; background:#f1f1ec; overflow:hidden; display:flex; margin:6px 0 10px; } .bar i { display:block; height:100%; }
+  code { background:#f1f1ec; padding:1px 5px; border-radius:4px; font-size:12.5px; }
+  .warnbox { background:#fff7e6; border-radius:10px; padding:10px 14px; font-size:13px; margin:16px auto 0; max-width:480px; text-align:left; }
+  details.more { background:var(--card); border:1px solid var(--line); border-radius:14px; margin-bottom:12px; }
+  details.more > summary { cursor:pointer; padding:16px 24px; font-weight:600; list-style:none; display:flex; justify-content:space-between; }
+  details.more > summary::after { content:'+'; color:var(--mut); font-weight:400; }
+  details.more[open] > summary::after { content:'–'; }
+  details.more > summary::-webkit-details-marker { display:none; }
+  details.more > div { padding:0 24px 20px; }
+  .toolbar { display:flex; gap:16px; align-items:center; flex-wrap:wrap; margin-bottom:16px; }
+  footer { text-align:center; color:var(--mut); font-size:12px; padding:0 24px 32px; }
   [hidden] { display:none !important; }
 </style>
 </head>
 <body>
-<header><h1>Nordisk Bilförsäkring · Price calculator</h1><span>Demo version · full coverage for passenger cars · the population, vehicle and theft data are simulated</span></header>
-<nav id="tabs">
-  <button data-t="quote" class="on">Get a price</button>
-  <button data-t="batch">All 300 applications</button>
-  <button data-t="model">How it works</button>
-</nav>
+<header>
+  <div class="brand"><i></i>Nordisk Bilförsäkring</div>
+  <nav id="tabs">
+    <button data-t="quote" class="on">Get a price</button>
+    <button data-t="batch">Applications</button>
+    <button data-t="model">How it works</button>
+  </nav>
+</header>
 <main>
 <section id="quote">
-  <div class="card">
-    <form id="form" class="row">
-      <label>Personal ID number<input id="pnr" placeholder="YYYYMMDD-XXXX" required></label>
-      <label>License plate<input id="reg" placeholder="ABC123" required></label>
-      <label>Crashes in the last 5 years (optional)<input id="krockar" type="number" min="0" placeholder="unknown"></label>
-      <button class="primary">Get my price</button>
-    </form>
-    <div class="chips"><span>Sample application:</span><select id="app" style="padding:4px 8px"></select><span>Try an example:</span><span id="demos"></span></div>
+  <div class="hero"><h1>Car insurance, priced fairly</h1><p>Enter your details and see your yearly price in seconds.</p></div>
+  <div class="narrow">
+    <div class="card">
+      <form id="form">
+        <div class="two">
+          <label>Personal ID number<input id="pnr" placeholder="YYYYMMDD-XXXX" required></label>
+          <label>License plate<input id="reg" placeholder="ABC123" required></label>
+        </div>
+        <label>Crashes in the last 5 years (optional)<input id="krockar" type="number" min="0" placeholder="Leave empty if unknown"></label>
+        <button class="primary">Get my price</button>
+      </form>
+      <details class="examples"><summary>Try an example</summary>
+        <div><select id="app"></select><span id="demos"></span></div>
+      </details>
+    </div>
+    <div id="out"></div>
   </div>
-  <div id="out"></div>
 </section>
 <section id="batch" hidden>
-  <div class="card"><div class="row"><button class="primary" id="runBatch">Run all applications</button><span class="mut" id="batchInfo"></span></div></div>
+  <div class="hero"><h1>All applications</h1><p>Price every pending application in one go.</p></div>
+  <div class="toolbar"><button class="primary" id="runBatch">Run all applications</button><span class="mut" id="batchInfo"></span></div>
   <div id="batchOut"></div>
 </section>
-<section id="model" hidden><div id="modelOut"></div></section>
+<section id="model" hidden>
+  <div class="hero"><h1>How it works</h1><p>How we arrive at your price, and how well it holds up.</p></div>
+  <div id="modelOut"></div>
+</section>
 </main>
+<footer>Demo version · full coverage for passenger cars · population, vehicle and theft data are simulated</footer>
 <script>
 const $ = s => document.querySelector(s);
 const kr = n => Math.round(n).toLocaleString('en-US') + ' kr';
@@ -92,47 +126,47 @@ function fchip(f) {
 function render(d) {
   const label = OUTCOME[d.utfall];
   let h = `<div class="card result ${d.utfall}"><span class="tag">${label}</span>`;
-  h += d.pris != null ? `<div class="price">${kr(d.pris)} <small>per year</small></div>` : `<h2 style="margin-top:10px">${esc(d.rubrik)}</h2>`;
-  h += `<p style="margin:6px 0 0">${esc(d.meddelande)}</p>`;
+  h += d.pris != null ? `<div class="price">${kr(d.pris)} <small>per year</small></div>` : `<h2 style="margin-top:14px">${esc(d.rubrik)}</h2>`;
+  h += `<p>${esc(d.meddelande)}</p>`;
   if (d.indata?.avvikelse) h += `<div class="warnbox">Where we got your crash history: ${d.indata.kallor.map(k => `${esc(k.kalla)}: <b>${k.antal}</b>`).join(' · ')}. We use the higher number to be safe.</div>`;
   h += `</div>`;
   if (d.utfall === 'PRIS') {
     const u = d.uppbyggnad, tot = u.forvantadKostnad || 1;
     const diff = d.pris - d.bas.pris, top = [...d.uppdelning].sort((a, b) => Math.abs(b.kr) - Math.abs(a.kr))[0];
     const sg = x => (x > 0 ? '+' : x < 0 ? '−' : '') + kr(Math.abs(x));
-    h += `<div class="card"><h2>Från basbelopp till din premie</h2>
-      <p>En typisk kund utan krockar (${d.bas.kund.alder} år, bil värd ${kr(d.bas.kund.varde)}, ${d.bas.kund.hk} hk, ${esc(d.bas.kund.drivmedel)}) betalar <b>${kr(d.bas.pris)}</b> per år. Du betalar <b>${kr(Math.abs(diff))} ${diff >= 0 ? 'mer' : 'mindre'}</b>${top && Math.abs(top.kr) >= 50 ? ', främst på grund av ' + top.namn.toLowerCase() : ''}.</p>
-      <table><tr><th>Post</th><th class="n">Belopp</th></tr>
-      <tr><td>Basbelopp</td><td class="n">${kr(d.bas.pris)}</td></tr>
-      ${d.uppdelning.map(x => `<tr><td>${x.namn}</td><td class="n">${sg(x.kr)}</td></tr>`).join('')}
-      <tr><td><b>Din premie</b></td><td class="n"><b>${kr(d.pris)}</b></td></tr></table>
-      <p class="mut">Beloppen fördelas rättvist mellan faktorerna (Shapley-metoden) och summerar exakt till din premie. Basbeloppet är ett räknat pris för en typisk kund, inte ett genomsnitt av verkliga priser.</p></div>`;
-    h += `<div class="grid"><div class="card"><h2>Why is the price what it is?</h2>
-      <table><tr><th>Factor</th><th>Details</th><th class="n">Effect on price</th></tr>
+    h += `<details class="more" open><summary>Why is the price what it is?</summary><div>
+      <table><tr><th>Factor</th><th>Details</th><th class="n">Effect</th></tr>
       ${d.drivare.map(x => `<tr><td><b>${x.namn}</b></td><td>${esc(x.text)}</td><td class="n">${fchip(x.faktor)}</td></tr>`).join('')}</table>
-      <p class="mut">Red means this factor makes your price higher than for an average customer. Green means it makes it lower. Gender is <b>not</b> used (it has been banned in EU insurance pricing since 2012).</p></div>
-      <div class="card"><h2>From risk to price</h2>
-        <div class="bar"><i style="width:${u.krockkostnad/tot*100}%;background:#14213d"></i><i style="width:${u.smaskador/tot*100}%;background:#e8a23d"></i></div>
-        <table>
-          <tr><td>Crashes (how often × what they cost)</td><td class="n">${kr(u.krockkostnad)}</td></tr>
-          <tr><td>Theft, fire and glass damage</td><td class="n">${kr(u.smaskador)}</td></tr>
-          <tr><td><b>Expected claims cost per year</b></td><td class="n"><b>${kr(u.forvantadKostnad)}</b></td></tr>
-          <tr><td>Adjusted so that about ${Math.round(u.malSkadekvot*100)}% of what you pay covers claims (the rest covers running costs and profit)</td><td class="n">${kr(u.ratPris)}</td></tr>
-          ${u.minAvgransad ? `<tr><td>Minimum price</td><td class="n">${kr(u.minPremie)}</td></tr>` : ''}
-          <tr><td><b>Yearly price</b></td><td class="n"><b>${kr(d.pris)}</b></td></tr></table>
-        ${d.utanKrockar ? `<p class="mut">With no crash history: <b>${kr(d.utanKrockar)}</b> per year.</p>` : ''}
-        <p class="mut">${esc(d.indata.bil.marke)} ${esc(d.indata.bil.modell)} ${d.indata.bil.arsmodell} · ${d.indata.alder} yrs old · ${esc(d.indata.ort)}</p></div></div>`;
+      <p class="mut">Red means this factor makes your price higher than for an average customer, green lower. Gender is <b>not</b> used (banned in EU insurance pricing since 2012).</p></div></details>`;
+    h += `<details class="more"><summary>From a typical customer's price to yours</summary><div>
+      <p class="mut">A typical customer with no crashes (${d.bas.kund.alder} yrs, car worth ${kr(d.bas.kund.varde)}, ${d.bas.kund.hk} hp, ${esc(FUEL[d.bas.kund.drivmedel] || d.bas.kund.drivmedel)}) pays <b>${kr(d.bas.pris)}</b> per year. You pay <b>${kr(Math.abs(diff))} ${diff >= 0 ? 'more' : 'less'}</b>${top && Math.abs(top.kr) >= 50 ? ', mainly because of ' + top.namn.toLowerCase() : ''}.</p>
+      <table><tr><th>Item</th><th class="n">Amount</th></tr>
+      <tr><td>Typical customer</td><td class="n">${kr(d.bas.pris)}</td></tr>
+      ${d.uppdelning.map(x => `<tr><td>${x.namn}</td><td class="n">${sg(x.kr)}</td></tr>`).join('')}
+      <tr><td><b>Your price</b></td><td class="n"><b>${kr(d.pris)}</b></td></tr></table>
+      <p class="mut">The amounts are split fairly between factors (Shapley method) and add up exactly to your price.</p></div></details>`;
+    h += `<details class="more"><summary>From risk to price</summary><div>
+      <div class="bar"><i style="width:${u.krockkostnad/tot*100}%;background:#16213a"></i><i style="width:${u.smaskador/tot*100}%;background:#e8a23d"></i></div>
+      <table>
+        <tr><td>Crashes (how often × what they cost)</td><td class="n">${kr(u.krockkostnad)}</td></tr>
+        <tr><td>Theft, fire and glass damage</td><td class="n">${kr(u.smaskador)}</td></tr>
+        <tr><td><b>Expected claims cost per year</b></td><td class="n"><b>${kr(u.forvantadKostnad)}</b></td></tr>
+        <tr><td>Adjusted so that about ${Math.round(u.malSkadekvot*100)}% of what you pay covers claims (the rest covers running costs and profit)</td><td class="n">${kr(u.ratPris)}</td></tr>
+        ${u.minAvgransad ? `<tr><td>Minimum price</td><td class="n">${kr(u.minPremie)}</td></tr>` : ''}
+        <tr><td><b>Yearly price</b></td><td class="n"><b>${kr(d.pris)}</b></td></tr></table>
+      ${d.utanKrockar ? `<p class="mut">With no crash history: <b>${kr(d.utanKrockar)}</b> per year.</p>` : ''}
+      <p class="mut">${esc(d.indata.bil.marke)} ${esc(d.indata.bil.modell)} ${d.indata.bil.arsmodell} · ${d.indata.alder} yrs old · ${esc(d.indata.ort)}</p></div></details>`;
   }
-  h += `<div class="card"><h2>Where the data came from</h2><table><tr><th>Source</th><th>Request</th><th class="n">Status</th><th class="n">Time (ms)</th></tr>
+  h += `<details class="more"><summary>Where the data came from</summary><div><table><tr><th>Source</th><th>Request</th><th class="n">Status</th><th class="n">Time (ms)</th></tr>
     ${d.anrop.map(a => `<tr><td>${a.api}</td><td><code>${esc(a.url)}</code></td><td class="n">${a.status}</td><td class="n">${a.ms}</td></tr>`).join('')}</table>
-    <p class="mut">These sources are simulated in this demo. In the real service they would be replaced by the population register (SPAR), the Swedish Transport Agency and the crime statistics office (BRÅ).</p></div>`;
+    <p class="mut">These sources are simulated in this demo. In the real service they would be replaced by the population register (SPAR), the Swedish Transport Agency and the crime statistics office (BRÅ).</p></div></details>`;
   $('#out').innerHTML = h;
 }
 
 async function run() {
   const p = new URLSearchParams({ personnummer: $('#pnr').value, regnummer: $('#reg').value });
   if ($('#krockar').value !== '') p.set('krockar', $('#krockar').value);
-  $('#out').innerHTML = '<div class="card mut">Calculating…</div>';
+  $('#out').innerHTML = '<div class="card mut" style="text-align:center">Calculating…</div>';
   render(await j('/api/quote?' + p));
 }
 $('#form').onsubmit = e => { e.preventDefault(); run(); };
@@ -141,7 +175,7 @@ function fill(a) { $('#pnr').value = a.personnummer; $('#reg').value = a.regnumm
 
 (async () => {
   const apps = await j('/api/ansokningar');
-  $('#app').innerHTML = '<option value="">– choose –</option>' + apps.map((a, i) => `<option value="${i}">#${a.id} · ${a.personnummer} · ${a.regnummer}</option>`).join('');
+  $('#app').innerHTML = '<option value="">Sample application…</option>' + apps.map((a, i) => `<option value="${i}">#${a.id} · ${a.personnummer} · ${a.regnummer}</option>`).join('');
   $('#app').onchange = e => e.target.value !== '' && fill(apps[e.target.value]);
   const demos = await j('/api/demo');
   $('#demos').innerHTML = demos.map((d, i) => `<button class="chip" data-i="${i}">${d.namn}</button>`).join(' ');
@@ -153,13 +187,13 @@ $('#runBatch').onclick = async () => {
   const r = await j('/api/batch'), pr = r.filter(x => x.pris);
   const avg = pr.reduce((s, x) => s + x.pris, 0) / pr.length;
   $('#batchInfo').textContent = `${r.length} applications in ${Math.round(performance.now() - t0)} ms · ${pr.length} got a price (average ${kr(avg)}) · ${r.filter(x => x.utfall === 'MANUELL').length} need a person to review · ${r.filter(x => x.utfall === 'AVSLAG').length} got no price · ${r.filter(x => x.avvikelse).length} where the reported crashes did not match our records`;
-  $('#batchOut').innerHTML = `<div class="card"><table><tr><th>#</th><th>ID number</th><th>Plate</th><th>Car</th><th class="n">Age</th><th class="n">Crashes (reported)</th><th>Result</th><th class="n">Price</th></tr>
+  $('#batchOut').innerHTML = `<div class="card" style="overflow-x:auto"><table><tr><th>#</th><th>ID number</th><th>Plate</th><th>Car</th><th class="n">Age</th><th class="n">Crashes (reported)</th><th>Result</th><th class="n">Price</th></tr>
     ${r.map(x => `<tr><td>${x.id}</td><td>${x.personnummer}</td><td>${x.regnummer}</td><td>${esc(x.bil ?? '–')}</td><td class="n">${x.alder ?? '–'}</td><td class="n">${x.krockar}${x.avvikelse ? ' ⚠' : ''}</td><td>${x.utfall === 'PRIS' ? '' : esc(OUTCOME[x.utfall])}</td><td class="n">${x.pris ? kr(x.pris) : '–'}</td></tr>`).join('')}</table></div>`;
 };
 
 async function loadModel() {
   const m = await j('/api/model'), pc = x => (x * 100).toFixed(1) + '%';
-  let h = `<div class="card"><h2>How the price is worked out</h2>
+  let h = `<div class="card narrow" style="max-width:none"><h2>How the price is worked out</h2>
     <p>We estimate how much you are likely to cost us in claims each year, then add a margin for running costs and profit. Only about ${Math.round(m.malSkadekvot*100)}% of your price is meant to pay for claims.</p>
     <ul class="mut"><li><b>How often you crash.</b> We start from the crash rate for your age group, based on ${m.underlag.kundrader.toLocaleString('en-US')} existing policies. The more of your own history we know, the more it counts.</li>
     <li><b>What a crash costs.</b> More expensive cars cost more to fix. Engine power and fuel type also play a part.</li>
