@@ -4,130 +4,135 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Nordisk Bilförsäkring – Car insurance price calculator</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css?family=Roboto+Condensed:700|Roboto:400,500,700&display=swap" rel="stylesheet">
 <style>
-  :root { --ink:#141414; --mut:#5e6166; --bg:#fff; --soft:#f4f4f4; --line:#e2e2e2; --blue:#1c6bba; --blue-d:#14508e; --ok:#1c7c54; --warn:#b36b00; --bad:#b3261e; }
+  :root { --bg:#0f130e; --surface:#151b13; --line:#262e23; --text:#edece6; --mut:#a7ac9f; --green:#85c441; --red:#e0605f; --warn:#d9a441; --foot:#0b0e0a; }
   * { box-sizing: border-box; }
-  html { scroll-behavior:smooth; }
-  body { margin:0; font:16px/1.55 "Helvetica Neue", Arial, system-ui, sans-serif; background:var(--bg); color:var(--ink); -webkit-font-smoothing:antialiased; }
-  /* Top bar */
-  header { position:sticky; top:0; z-index:10; background:rgba(255,255,255,.96); backdrop-filter:blur(8px); border-bottom:1px solid var(--line); }
-  header .in { max-width:1200px; margin:0 auto; padding:0 32px; height:64px; display:flex; align-items:center; justify-content:space-between; gap:16px; }
-  .brand { font-weight:600; letter-spacing:.22em; font-size:13px; text-transform:uppercase; white-space:nowrap; }
-  nav { display:flex; gap:32px; }
-  nav button { background:none; border:0; color:var(--ink); height:64px; cursor:pointer; font:inherit; font-size:14px; border-bottom:2px solid transparent; padding:2px 0 0; }
-  nav button:hover { color:var(--blue); }
-  nav button.on { border-color:var(--ink); }
-  main { max-width:1200px; margin:0 auto; padding:0 32px 80px; }
-  /* Hero */
-  .hero { margin:0 -32px 48px; padding:88px 32px 80px; color:#fff; text-align:center;
-    background:radial-gradient(1200px 500px at 70% -10%, #3b4a63 0%, rgba(59,74,99,0) 60%), linear-gradient(180deg,#1b2433 0%,#10151f 100%); }
-  .hero h1 { margin:0 auto 16px; font-size:clamp(34px,5.2vw,60px); font-weight:300; letter-spacing:-.02em; line-height:1.08; max-width:860px; }
-  .hero p { margin:0 auto; color:#c5cad3; font-size:18px; font-weight:300; max-width:560px; }
-  .hero.small { padding:56px 32px 48px; }
-  .hero.small h1 { font-size:clamp(30px,4vw,44px); }
-  .narrow { max-width:620px; margin:-72px auto 0; position:relative; }
-  .card { background:#fff; border:1px solid var(--line); border-radius:4px; padding:28px; margin-bottom:16px; }
-  .narrow > .card:first-child { box-shadow:0 18px 50px rgba(0,0,0,.18); border:0; padding:32px; }
-  form { display:grid; gap:18px; }
-  label { display:flex; flex-direction:column; font-size:12px; letter-spacing:.06em; text-transform:uppercase; color:var(--mut); gap:7px; }
-  input, select { font:inherit; font-size:16px; letter-spacing:0; text-transform:none; padding:13px 14px; border:1px solid #bdbfc2; border-radius:2px; color:var(--ink); background:#fff; width:100%; }
-  input:focus, select:focus { outline:0; border-color:var(--blue); box-shadow:0 0 0 1px var(--blue); }
-  .two { display:grid; grid-template-columns:1fr 1fr; gap:16px; } @media (max-width:560px){ .two{grid-template-columns:1fr;} }
-  button.primary { background:var(--blue); color:#fff; border:0; padding:16px 28px; border-radius:2px; font:inherit; font-size:15px; font-weight:500; cursor:pointer; transition:background .15s; }
-  button.primary:hover { background:var(--blue-d); }
-  button.chip { background:#fff; color:var(--ink); border:1px solid #bdbfc2; padding:6px 14px; border-radius:2px; font-size:13px; cursor:pointer; }
-  button.chip:hover { border-color:var(--ink); }
-  details.examples { margin-top:20px; font-size:14px; color:var(--mut); }
-  details.examples summary { cursor:pointer; color:var(--blue); }
-  details.examples > div { display:flex; gap:8px; flex-wrap:wrap; align-items:center; margin-top:12px; }
-  details.examples select { width:auto; padding:7px 10px; font-size:14px; }
-  /* Result */
-  .result { text-align:center; padding:44px 28px; }
-  .tag { display:inline-block; font-size:11px; text-transform:uppercase; letter-spacing:.14em; padding:4px 12px; border-radius:2px; color:#fff; background:var(--ok); }
-  .MANUELL .tag { background:var(--warn); } .AVSLAG .tag { background:var(--bad); }
-  .price { font-size:64px; font-weight:300; letter-spacing:-.03em; line-height:1.1; margin:18px 0 4px; } .price small { font-size:17px; font-weight:400; color:var(--mut); letter-spacing:0; }
-  .result p { margin:10px auto 0; max-width:480px; color:var(--mut); }
-  h2 { font-size:20px; font-weight:400; margin:0 0 14px; letter-spacing:-.01em; } h3 { font-size:12px; text-transform:uppercase; letter-spacing:.1em; color:var(--mut); font-weight:500; margin:4px 0 8px; }
-  table { border-collapse:collapse; width:100%; font-size:14.5px; } th, td { text-align:left; padding:11px 8px; border-bottom:1px solid var(--line); vertical-align:top; } th { color:var(--mut); font-weight:500; font-size:11.5px; text-transform:uppercase; letter-spacing:.08em; } tr:last-child td { border-bottom:0; }
-  td.n, th.n { text-align:right; font-variant-numeric:tabular-nums; white-space:nowrap; }
-  .f { display:inline-block; min-width:56px; text-align:center; padding:1px 8px; border-radius:2px; font-size:12.5px; font-weight:600; }
-  .up { background:#fde8e6; color:var(--bad); } .down { background:#e2f4ea; color:var(--ok); } .flat { background:var(--soft); color:var(--mut); }
-  .grid { display:grid; grid-template-columns:1fr 1fr; gap:32px; } @media (max-width:800px){ .grid{grid-template-columns:1fr;} }
+  body { margin:0; font:16px/1.5 Roboto, -apple-system, "Segoe UI", "Helvetica Neue", Arial, sans-serif; background:var(--bg); color:var(--mut); }
+  .wrap { max-width:1140px; margin:0 auto; padding:0 30px; }
+  h1, h2, h3, h4 { font-family:Georgia, serif; font-weight:700; color:var(--text); margin:0; }
+  .cond { font-family:"Roboto Condensed", Roboto, sans-serif; font-weight:700; }
+  h1 { font-size:clamp(34px,5vw,52px); line-height:1.12; }
+  h2 { font-size:22px; margin-bottom:14px; }
+  h3 { font-size:18px; margin-bottom:10px; }
   .mut { color:var(--mut); font-size:14px; }
-  .bar { height:6px; background:var(--soft); overflow:hidden; display:flex; margin:6px 0 12px; } .bar i { display:block; height:100%; }
-  code { background:var(--soft); padding:1px 5px; border-radius:2px; font-size:12.5px; }
-  .warnbox { background:#fff7e6; border-left:3px solid var(--warn); padding:12px 16px; font-size:14px; margin:20px auto 0; max-width:480px; text-align:left; }
-  details.more { background:#fff; border:1px solid var(--line); border-radius:4px; margin-bottom:10px; }
-  details.more > summary { cursor:pointer; padding:20px 28px; font-size:17px; list-style:none; display:flex; justify-content:space-between; align-items:center; }
-  details.more > summary::after { content:'+'; color:var(--blue); font-size:24px; font-weight:300; line-height:1; }
+  /* Menu */
+  nav.top { padding:26px 0; }
+  nav.top .wrap { display:flex; align-items:center; justify-content:space-between; gap:20px; }
+  .brand { color:var(--text); font-family:"Roboto Condensed", Roboto, sans-serif; font-weight:700; font-size:20px; letter-spacing:.02em; }
+  .brand span { color:var(--green); }
+  nav.top ul { display:flex; align-items:center; margin:0; padding:0; list-style:none; gap:30px; }
+  nav.top button { background:none; border:0; color:#cfd2c8; font:inherit; cursor:pointer; padding:4px 0; }
+  nav.top button:hover { color:var(--text); }
+  nav.top button.on { color:var(--text); box-shadow:0 2px 0 var(--green); }
+  /* Buttons */
+  button.primary { background:var(--green); color:#0f130e; border:2px solid var(--green); padding:11px 30px; border-radius:3px; font:inherit; font-weight:700; cursor:pointer; transition:.3s all ease; }
+  button.primary:hover { background:transparent; color:var(--green); }
+  button.outline { background:transparent; color:var(--text); border:2px solid var(--mut); padding:9px 26px; border-radius:3px; font:inherit; font-weight:500; cursor:pointer; }
+  button.outline:hover { border-color:var(--green); }
+  button.chip { background:transparent; color:var(--mut); border:1px solid var(--line); border-radius:3px; padding:4px 10px; font-size:14px; cursor:pointer; }
+  button.chip:hover { border-color:var(--green); color:var(--text); }
+  /* Hero */
+  .hero { padding:56px 0 48px; }
+  .eyebrow { font-family:"Roboto Condensed", sans-serif; font-weight:700; font-size:14px; color:var(--green); letter-spacing:.06em; text-transform:uppercase; margin-bottom:12px; }
+  .lead { font-size:19px; margin:16px 0 0; max-width:560px; }
+  /* Form */
+  .panel { background:var(--surface); border:1px solid var(--line); border-radius:3px; padding:28px; margin-top:36px; }
+  form { display:grid; grid-template-columns:1fr 1fr 1fr auto; gap:16px 20px; align-items:end; } @media (max-width:900px){ form{ grid-template-columns:1fr 1fr; } form button{ grid-column:1/-1; } } @media (max-width:560px){ form{ grid-template-columns:1fr; } }
+  label { display:block; font-family:"Roboto Condensed", sans-serif; font-weight:700; font-size:14px; color:var(--mut); }
+  label input { display:block; margin-top:6px; }
+  input, select { font:inherit; font-weight:400; width:100%; padding:10px 12px; border:1px solid var(--line); border-radius:0; background:transparent; color:var(--text); }
+  select option { background:var(--surface); }
+  input::placeholder { color:#6b7064; }
+  input:focus, select:focus { outline:0; border-color:var(--green); }
+  details.examples { margin-top:18px; font-size:14px; }
+  details.examples summary { cursor:pointer; color:var(--green); }
+  details.examples > div { display:flex; gap:8px; flex-wrap:wrap; align-items:center; margin-top:12px; }
+  details.examples select { width:auto; padding:5px 10px; font-size:14px; }
+  /* Stats row */
+  .stats { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:12px 20px; padding:22px 0; border-top:1px solid var(--line); border-bottom:1px solid var(--line); margin-top:40px; } @media (max-width:700px){ .stats{ grid-template-columns:repeat(2,1fr); } }
+  .stat b { display:block; font-family:"Roboto Condensed", sans-serif; font-size:30px; line-height:1.15; color:var(--text); }
+  .stat span { font-size:14px; }
+  /* Result */
+  #out { margin-top:40px; } #out:empty { display:none; }
+  .result { background:var(--surface); border:1px solid var(--line); border-left:4px solid var(--green); border-radius:3px; padding:30px 28px; margin-bottom:16px; }
+  .result.MANUELL { border-left-color:var(--warn); } .result.AVSLAG { border-left-color:var(--red); }
+  .tag { font-family:"Roboto Condensed", sans-serif; font-weight:700; font-size:13px; letter-spacing:.06em; text-transform:uppercase; color:var(--green); }
+  .MANUELL .tag { color:var(--warn); } .AVSLAG .tag { color:var(--red); }
+  .price { font-family:"Roboto Condensed", sans-serif; font-weight:700; font-size:56px; line-height:1.1; color:var(--text); margin:6px 0 4px; } .price small { font-size:18px; font-weight:400; color:var(--mut); font-family:Roboto, sans-serif; }
+  .result p { margin:8px 0 0; max-width:620px; }
+  .warnbox { border:1px solid var(--line); border-left:3px solid var(--warn); padding:10px 14px; font-size:14px; margin-top:16px; max-width:620px; }
+  /* Tables */
+  table { width:100%; border-collapse:collapse; font-size:15px; font-variant-numeric:tabular-nums; }
+  th { font-family:"Roboto Condensed", sans-serif; font-weight:700; font-size:13px; color:var(--mut); text-align:left; padding:6px 10px; border-bottom:1px solid var(--text); white-space:nowrap; }
+  td { padding:8px 10px; border-bottom:1px solid var(--line); vertical-align:top; color:#cfd2c8; }
+  tr:last-child td { border-bottom:0; }
+  td.n, th.n { text-align:right; white-space:nowrap; }
+  td b { color:var(--text); }
+  .f { display:inline-block; min-width:54px; text-align:right; font-weight:700; }
+  .up { color:var(--red); } .down { color:var(--green); } .flat { color:var(--mut); }
+  .grid { display:grid; grid-template-columns:1fr 1fr; gap:40px; } @media (max-width:800px){ .grid{grid-template-columns:1fr;} }
+  .bar { height:6px; background:var(--line); overflow:hidden; display:flex; margin:6px 0 12px; } .bar i { display:block; height:100%; }
+  code { background:var(--surface); border:1px solid var(--line); padding:0 5px; font-size:13px; color:var(--text); }
+  details.more { border-bottom:1px solid var(--line); }
+  details.more:first-of-type { border-top:1px solid var(--line); }
+  details.more > summary { cursor:pointer; padding:16px 0; color:var(--text); font-family:"Roboto Condensed", sans-serif; font-weight:700; font-size:17px; list-style:none; display:flex; justify-content:space-between; }
+  details.more > summary::after { content:'+'; color:var(--green); font-size:20px; }
   details.more[open] > summary::after { content:'–'; }
   details.more > summary::-webkit-details-marker { display:none; }
-  details.more > div { padding:0 28px 24px; }
-  .toolbar { display:flex; gap:20px; align-items:center; flex-wrap:wrap; margin-bottom:20px; }
-  /* Info strip */
-  .steps { display:grid; grid-template-columns:repeat(3,1fr); gap:40px; margin:72px 0 0; } @media (max-width:800px){ .steps{grid-template-columns:1fr; gap:28px;} }
-  .steps b { display:block; font-size:12px; letter-spacing:.14em; text-transform:uppercase; color:var(--blue); margin-bottom:10px; font-weight:600; }
-  .steps h3.t { font-size:22px; font-weight:400; text-transform:none; letter-spacing:-.01em; color:var(--ink); margin:0 0 8px; }
-  .steps p { margin:0; color:var(--mut); font-size:15px; }
-  .promise { background:var(--soft); margin:72px -32px 0; padding:56px 32px; }
-  .promise .in { max-width:1136px; margin:0 auto; display:grid; grid-template-columns:repeat(3,1fr); gap:40px; } @media (max-width:800px){ .promise .in{grid-template-columns:1fr; gap:28px;} }
-  .promise h3.t { font-size:20px; font-weight:400; text-transform:none; letter-spacing:-.01em; color:var(--ink); margin:0 0 8px; }
-  .promise p { margin:0; color:var(--mut); font-size:15px; }
-  footer { background:#141414; color:#9a9da3; font-size:13px; padding:36px 32px; text-align:center; }
-  footer b { color:#fff; letter-spacing:.22em; text-transform:uppercase; font-weight:600; font-size:12px; display:block; margin-bottom:8px; }
+  details.more > div { padding:0 0 20px; }
+  /* Other pages */
+  .card { background:var(--surface); border:1px solid var(--line); border-radius:3px; padding:26px; margin-bottom:20px; }
+  .card ul { padding-left:20px; }
+  .toolbar { display:flex; gap:20px; align-items:center; flex-wrap:wrap; margin:32px 0 24px; }
+  .pad { padding-bottom:80px; }
+  footer { background:var(--foot); border-top:1px solid var(--line); padding:36px 0; font-size:14px; }
+  footer b { display:block; color:var(--text); font-family:"Roboto Condensed", sans-serif; font-size:16px; margin-bottom:6px; }
   [hidden] { display:none !important; }
 </style>
 </head>
 <body>
-<header><div class="in">
-  <div class="brand">Nordisk Bilförsäkring</div>
-  <nav id="tabs">
-    <button data-t="quote" class="on">Get a price</button>
-    <button data-t="batch">Applications</button>
-    <button data-t="model">How it works</button>
-  </nav>
-</div></header>
-<main>
+<nav class="top"><div class="wrap">
+  <div class="brand">Nordisk <span>Bilförsäkring</span></div>
+  <ul id="tabs">
+    <li><button data-t="quote" class="on">Get a price</button></li>
+    <li><button data-t="batch">Applications</button></li>
+    <li><button data-t="model">How it works</button></li>
+  </ul>
+</div></nav>
+<div class="wrap pad">
 <section id="quote">
-  <div class="hero"><h1>Car insurance that is priced on you</h1><p>Enter your plate and personal ID number. Get your yearly price in seconds, with a clear explanation of why.</p></div>
-  <div class="narrow">
-    <div class="card">
+  <div class="hero">
+    <div class="eyebrow">Full coverage · passenger cars</div>
+    <h1>Car insurance, priced on you</h1>
+    <p class="lead">Enter your plate and personal ID number to see your yearly price, and exactly why it is what it is.</p>
+    <div class="panel">
       <form id="form">
-        <div class="two">
-          <label>Personal ID number<input id="pnr" placeholder="YYYYMMDD-XXXX" required></label>
-          <label>License plate<input id="reg" placeholder="ABC123" required></label>
-        </div>
-        <label>Crashes in the last 5 years (optional)<input id="krockar" type="number" min="0" placeholder="Leave empty if unknown"></label>
+        <label>Personal ID number<input id="pnr" placeholder="YYYYMMDD-XXXX" required></label>
+        <label>License plate<input id="reg" placeholder="ABC123" required></label>
+        <label>Crashes, last 5 years (optional)<input id="krockar" type="number" min="0" placeholder="Unknown"></label>
         <button class="primary">Get my price</button>
       </form>
       <details class="examples"><summary>Try an example</summary>
         <div><select id="app"></select><span id="demos"></span></div>
       </details>
     </div>
-    <div id="out"></div>
   </div>
-  <div class="steps">
-    <div><b>01</b><h3 class="t">Tell us who and what</h3><p>Just your personal ID number and the license plate. We fetch the rest from the registers.</p></div>
-    <div><b>02</b><h3 class="t">See your price</h3><p>Full coverage for your car: damage you cause, damage to your own car, theft, fire and glass.</p></div>
-    <div><b>03</b><h3 class="t">Understand why</h3><p>Every factor is shown in kronor, so you can see exactly what moves your price up or down.</p></div>
-  </div>
-  <div class="promise"><div class="in">
-    <div><h3 class="t">Fair by design</h3><p>Priced on risk: your age, your car and your own crash history. Gender is never used.</p></div>
-    <div><h3 class="t">Built on real claims</h3><p>The model is calibrated on thousands of insured years and tested against actual claims costs.</p></div>
-    <div><h3 class="t">A person when it matters</h3><p>Unusual cases go to an agent instead of an automatic guess, and we tell you why.</p></div>
-  </div></div>
+  <div id="out"></div>
+  <div class="stats" id="stats"></div>
 </section>
 <section id="batch" hidden>
-  <div class="hero small"><h1>All applications</h1><p>Price every pending application in one go.</p></div>
-  <div class="toolbar" style="margin-top:32px"><button class="primary" id="runBatch">Run all applications</button><span class="mut" id="batchInfo"></span></div>
+  <div class="hero"><div class="eyebrow">Back office</div><h1>Applications</h1><p class="lead">Price every pending application in one go.</p></div>
+  <div class="toolbar"><button class="primary" id="runBatch">Run all applications</button><span class="mut" id="batchInfo"></span></div>
   <div id="batchOut"></div>
 </section>
 <section id="model" hidden>
-  <div class="hero small"><h1>How it works</h1><p>How we arrive at your price, and how well it holds up.</p></div>
-  <div id="modelOut" style="margin-top:32px"></div>
+  <div class="hero"><div class="eyebrow">Pricing model</div><h1>How it works</h1><p class="lead">How we arrive at your price, and how well it holds up.</p></div>
+  <div id="modelOut"></div>
 </section>
-</main>
-<footer><b>Nordisk Bilförsäkring</b>Demo version · full coverage for passenger cars · population, vehicle and theft data are simulated</footer>
+</div>
+<footer><div class="wrap"><b>Nordisk Bilförsäkring</b>Demo version · full coverage for passenger cars · population, vehicle and theft data are simulated</div></footer>
 <script>
 const $ = s => document.querySelector(s);
 const kr = n => Math.round(n).toLocaleString('en-US') + ' kr';
@@ -174,7 +179,7 @@ function render(d) {
       <tr><td><b>Your price</b></td><td class="n"><b>${kr(d.pris)}</b></td></tr></table>
       <p class="mut">The amounts are split fairly between factors (Shapley method) and add up exactly to your price.</p></div></details>`;
     h += `<details class="more"><summary>From risk to price</summary><div>
-      <div class="bar"><i style="width:${u.krockkostnad/tot*100}%;background:#141414"></i><i style="width:${u.smaskador/tot*100}%;background:#1c6bba"></i></div>
+      <div class="bar"><i style="width:${u.krockkostnad/tot*100}%;background:#85c441"></i><i style="width:${u.smaskador/tot*100}%;background:#5d6a55"></i></div>
       <table>
         <tr><td>Crashes (how often × what they cost)</td><td class="n">${kr(u.krockkostnad)}</td></tr>
         <tr><td>Theft, fire and glass damage</td><td class="n">${kr(u.smaskador)}</td></tr>
@@ -189,12 +194,13 @@ function render(d) {
     ${d.anrop.map(a => `<tr><td>${a.api}</td><td><code>${esc(a.url)}</code></td><td class="n">${a.status}</td><td class="n">${a.ms}</td></tr>`).join('')}</table>
     <p class="mut">These sources are simulated in this demo. In the real service they would be replaced by the population register (SPAR), the Swedish Transport Agency and the crime statistics office (BRÅ).</p></div></details>`;
   $('#out').innerHTML = h;
+  $('#out').scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
 async function run() {
   const p = new URLSearchParams({ personnummer: $('#pnr').value, regnummer: $('#reg').value });
   if ($('#krockar').value !== '') p.set('krockar', $('#krockar').value);
-  $('#out').innerHTML = '<div class="card mut" style="text-align:center">Calculating…</div>';
+  $('#out').innerHTML = '<div class="mut" style="text-align:center">Calculating…</div>';
   render(await j('/api/quote?' + p));
 }
 $('#form').onsubmit = e => { e.preventDefault(); run(); };
@@ -202,6 +208,9 @@ $('#form').onsubmit = e => { e.preventDefault(); run(); };
 function fill(a) { $('#pnr').value = a.personnummer; $('#reg').value = a.regnummer; $('#krockar').value = a.krockar ?? ''; run(); }
 
 (async () => {
+  const m = await j('/api/model'), n = m.underlag.kundrader.toLocaleString('en-US');
+  $('#stats').innerHTML = [[n, 'policies the model learned from'], [Math.round(m.malSkadekvot * 100) + ' %', 'of your price pays for claims'], ['6', 'factors, each shown in kronor'], ['0', 'use of gender']]
+    .map(([v, t]) => `<div class="stat"><b>${v}</b><span>${t}</span></div>`).join('');
   const apps = await j('/api/ansokningar');
   $('#app').innerHTML = '<option value="">Sample application…</option>' + apps.map((a, i) => `<option value="${i}">#${a.id} · ${a.personnummer} · ${a.regnummer}</option>`).join('');
   $('#app').onchange = e => e.target.value !== '' && fill(apps[e.target.value]);
