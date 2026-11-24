@@ -31,7 +31,7 @@ function mix(ref, person, mask) {
   return {
     age: use(0) ? person.age : ref.age,
     crashes: use(1) ? person.crashes : ref.crashes,
-    years: ref.years,
+    years: use(1) ? (person.years ?? ref.years) : ref.years,
     car: { varde: use(2) ? person.car.varde : ref.car.varde, hk: use(3) ? person.car.hk : ref.car.hk,
       drivmedel: use(4) ? person.car.drivmedel : ref.car.drivmedel },
     regionIdx: use(5) ? person.regionIdx : ref.regionIdx,

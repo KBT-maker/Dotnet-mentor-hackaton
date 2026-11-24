@@ -5,6 +5,12 @@ import { referenceCustomer, breakdown } from './base.js';
 
 const kr = n => Math.round(n).toLocaleString('en-US') + ' kr';
 const FUEL = { bensin: 'Petrol', diesel: 'Diesel', el: 'Electric', hybrid: 'Hybrid' };
+const plural = (n, w) => `${n} ${w}${n === 1 ? '' : 's'}`;
+const histText = (n, ar, r) => {
+  const nn = Number.isInteger(n) ? n : +n.toFixed(1), period = ar === 5 ? 'the last five years' : `the last ${plural(Math.round(ar * 10) / 10, 'year')}`;
+  return (nn === 0 ? `No crashes in ${period}.` : `${plural(nn, 'crash').replace('crashs', 'crashes')} in ${period}.`) +
+    ` We expect a crash in about ${(r.freq * 100).toFixed(1)}% of years (your own history counts for ${Math.round(r.z * 100)}% of that estimate).`;
+};
 const pct = r => (r >= 1 ? '+' : '−') + Math.round(Math.abs(r - 1) * 100) + ' %';
 
 export function createEngine({ model, data, mockBase }) {
@@ -44,6 +50,10 @@ export function createEngine({ model, data, mockBase }) {
     if (pn.alder < 18) return done(nej('AVSLAG', 'FOR_UNG', 'You must be at least 18',
       'You need to be 18 to buy car insurance from us. A parent or guardian can buy the insurance for you.'));
     const pnr = pn.pnr12;
+    const uppgivna = krockar == null || String(krockar).trim() === '' ? null : Number(krockar);
+    if (uppgivna != null && (!Number.isInteger(uppgivna) || uppgivna < 0 || uppgivna > 50))
+      return done(nej('AVSLAG', 'OGILTIGT_KROCKAR', "That number of crashes doesn't look right",
+        'Please enter the number of crashes as a whole number from 0 and up, or leave the field empty if you are not sure.'));
 
     // 2. Hämta data från externa källor (parallellt)
     const [spar, fordon] = await Promise.all([
@@ -70,46 +80,53 @@ export function createEngine({ model, data, mockBase }) {
 
     // 3. Skadehistorik: kombinera uppgiven historik och vår egen kundhistorik – ta den mest försiktiga.
     //    (GSR används inte: det är ett skaderegister för skadereglering och enligt en äldre källa inte avsett för att pröva nya kunder. Verifiera nuvarande regler.)
-    const uppgivna = krockar == null || krockar === '' ? null : +krockar;
     const egna = kunderByPnr.get(pnr) || [];
     const egnaKrockar = egna.reduce((s, k) => s + k.krockar, 0);
     const egnaAr = egna.reduce((s, k) => s + k.ar, 0);
-    const egna5 = egnaAr === 0 ? 0 : egnaAr <= 5 ? egnaKrockar : Math.round(egnaKrockar * 5 / egnaAr);
+    // Varje källa anges som krockar + antal år den faktiskt täcker. Historik längre än 10 år räknas om till 10 år (inga avrundningar).
+    const MAX_AR = 10;
     const kallor = [
-      uppgivna != null && { kalla: 'Reported by you', antal: uppgivna },
-      egnaAr > 0 && { kalla: 'Our own customer records', antal: egna5 },
+      uppgivna != null && { kalla: 'Reported by you', antal: uppgivna, ar: 5 },
+      egnaAr > 0 && { kalla: 'Our own customer records', antal: egnaAr > MAX_AR ? egnaKrockar * MAX_AR / egnaAr : egnaKrockar, ar: Math.min(egnaAr, MAX_AR) },
     ].filter(Boolean);
-    // Ingen uppgift alls -> okänd historik: prissätts på åldersgruppens snittfrekvens (inte som "0 krockar")
-    const krockar5 = kallor.length ? Math.max(...kallor.map(k => k.antal)) : null;
-    const avvikelse = uppgivna != null && krockar5 > uppgivna;
+    // Försiktigast gäller: den källa som ger högst pris används. Kort historik får lägre tilltro via ar (trovärdighet), inte som "rena" år.
+    const priceFor = k => price(model, { age: pn.alder, car, crashes: k.antal, years: k.ar, regionIdx }).raw;
+    const vald = kallor.length ? kallor.reduce((best, k) => (priceFor(k) > priceFor(best) ? k : best)) : null;
+    // Ingen uppgift alls -> okänd historik: prissätts på prior (inte som "0 krockar")
+    const krockar5 = vald ? vald.antal : null;
+    const histAr = vald ? vald.ar : 5;
+    const egna5 = egnaAr > 0 ? egnaKrockar * 5 / egnaAr : 0;
+    const avvikelse = uppgivna != null && egnaAr > 0 && Math.round(egna5) > uppgivna;
 
     // 4. Riskregler som kräver handläggare
     const hk = car.hk;
     const manuellt = [];
-    if (krockar5 != null && krockar5 >= 4) manuellt.push(`${krockar5} crashes in the last five years`);
+    const krockarPer5 = vald ? (vald.ar > 5 ? vald.antal * 5 / vald.ar : vald.antal) : null;   // jämförbart med "senaste fem åren"
+    if (krockarPer5 != null && krockarPer5 >= 4) manuellt.push(`${Math.round(krockarPer5)} crashes in the last five years`);
     if (pn.alder < 25 && hk >= 300) manuellt.push(`the driver is under 25 and the car has ${hk} horsepower`);
     if (car.varde > 1000000) manuellt.push(`the car is worth more than 1,000,000 kr`);
     if ((kunderByReg.get(reg.regnr) || []).some(k => k.personnummer !== pnr)) manuellt.push('the car is already insured with us by someone else');
-    const grund = { personnummer: pnr, alder: pn.alder, ort: spar.body.folkbokford.ort, lan: spar.body.folkbokford.lan, bil: car, krockar5, kallor, avvikelse };
+    const grund = { personnummer: pnr, alder: pn.alder, ort: spar.body.folkbokford.ort, lan: spar.body.folkbokford.lan, bil: car, krockar5, histAr, avvikelse,
+      kallor: kallor.map(k => ({ ...k, antal: +k.antal.toFixed(1) })) };
     if (manuellt.length) return done(nej('MANUELL', 'RISKGRANSKNING', 'An agent needs to look at your application',
       "We can't give you a price straight away. This is because " + manuellt.join(' and ') +
       '. We will get back to you within two working days.', { indata: grund, skalForManuell: manuellt }));
 
     // 5. Prissättning
-    const r = price(model, { age: pn.alder, car, crashes: krockar5, years: 5, regionIdx });
-    const utan = krockar5 > 0 ? price(model, { age: pn.alder, car, crashes: 0, years: 5, regionIdx }).pris : null;
-    const bd = breakdown(model, ref, { age: pn.alder, car, crashes: krockar5, regionIdx });
+    const r = price(model, { age: pn.alder, car, crashes: krockar5, years: histAr, regionIdx });
+    const utan = krockar5 > 0 ? price(model, { age: pn.alder, car, crashes: 0, years: histAr, regionIdx }).pris : null;
+    const bd = breakdown(model, ref, { age: pn.alder, car, crashes: krockar5, years: histAr, regionIdx });
     const snitt = model.frekvens.snitt;
     const drivare = [
       { namn: 'Age', text: `You are ${pn.alder}. Drivers in your age group have a crash in about ${(r.ageFreq * 100).toFixed(1)}% of years, compared with ${(snitt * 100).toFixed(1)}% for all drivers.`, faktor: r.ageFreq / snitt },
-      { namn: 'Crash history', text: krockar5 == null ? 'No crash history given, so we assume the average for your age group.' : krockar5 === 0 ? 'No crashes in the last five years.' : `${krockar5} crash${krockar5 > 1 ? 'es' : ''} in the last five years. We expect a crash in about ${(r.freq * 100).toFixed(1)}% of years (your own history counts for ${Math.round(r.z * 100)}% of that estimate).`, faktor: r.freq / r.prior },
+      { namn: 'Crash history', text: krockar5 == null ? 'No crash history given, so we assume the average for your age group.' : histText(krockar5, histAr, r), faktor: r.freq / r.prior },
       { namn: 'Car value', text: `A car worth ${kr(car.varde)} costs about ${kr(r.sev)} to repair after a crash, plus about ${kr(r.smaskador)} a year for theft, fire and glass damage.`, faktor: null },
       { namn: 'Engine power', text: `${hk} horsepower`, faktor: r.hpF * r.fqHk },
       { namn: 'Fuel type', text: FUEL[car.drivmedel] || car.drivmedel, faktor: r.fuelF * r.fqFuel },
       { namn: 'Where you live', text: `${spar.body.folkbokford.ort} (${spar.body.folkbokford.lan}): theft risk is ${regionIdx.toFixed(2)}× the national average (an estimate, not based on real data).`, faktor: regionIdx },
     ];
     const meddelande = `Your yearly price is ${kr(r.pris)}.` +
-      (utan && utan < r.pris ? ` With no crashes in the last five years it would have been ${kr(utan)}.` : '') +
+      (utan && utan < r.pris ? ` With a clean crash record it would have been ${kr(utan)}.` : '') +
       (avvikelse ? ' Note: our own records show more crashes than you reported, so the price is based on those.' : '');
     return done({ utfall: 'PRIS', kod: 'PRIS', pris: r.pris, rubrik: `Your yearly price: ${kr(r.pris)}`, meddelande,
       indata: grund, drivare,
