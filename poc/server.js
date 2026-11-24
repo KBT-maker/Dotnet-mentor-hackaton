@@ -6,6 +6,7 @@ import { loadData, makePnr } from './lib.js';
 import { loadModel } from './calibrate.js';
 import { createEngine } from './engine.js';
 import { mockRouter, DEMO } from './mocks.js';
+import { monitor } from './monitor.js';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const PORT = +process.env.PORT || 3000;
@@ -44,6 +45,7 @@ http.createServer(async (req, res) => {
     if (url.pathname === '/api/ansokningar') return json(res, 200, data.ansokningar);
     if (url.pathname === '/api/demo') return json(res, 200, demoCases);
     if (url.pathname === '/api/model') return json(res, 200, model);
+    if (url.pathname === '/api/monitor') return json(res, 200, monitor(model, data));
     if (url.pathname === '/api/batch') {
       const out = [];
       for (const a of data.ansokningar) {

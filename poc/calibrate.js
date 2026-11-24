@@ -3,7 +3,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { loadData, parsePersonnummer } from './lib.js';
-import { AGE_BANDS, HP_LABELS, VALUE_LABELS, ageBand, hpBand, valueBand, price } from './pricing.js';
+import { AGE_BANDS, AGE_KNOTS, ageBasis, HP_LABELS, VALUE_LABELS, ageBand, hpBand, valueBand, price } from './pricing.js';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 export const MODEL_FILE = path.join(here, 'faktorer.json');
@@ -20,14 +20,29 @@ export function prepare(data, now = new Date()) {
 
 const K_SHRINK = 25; // förväntade krockar i en nivå som krävs för 50 % tilltro till nivåns egen frekvens
 
+/** Löser A·x = b (Gauss med pivotering). */
+function solve(A, b) {
+  const n = b.length, M = A.map((r, i) => [...r, b[i]]);
+  for (let i = 0; i < n; i++) {
+    let p = i;
+    for (let r = i + 1; r < n; r++) if (Math.abs(M[r][i]) > Math.abs(M[p][i])) p = r;
+    [M[i], M[p]] = [M[p], M[i]];
+    for (let r = i + 1; r < n; r++) { const f = M[r][i] / M[i][i]; for (let c = i; c <= n; c++) M[r][c] -= f * M[i][c]; }
+  }
+  const x = Array(n).fill(0);
+  for (let i = n - 1; i >= 0; i--) { let t = M[i][n]; for (let c = i + 1; c < n; c++) t -= M[i][c] * x[c]; x[i] = t / M[i][i]; }
+  return x;
+}
+
+export const AGE_LAMBDA = 40; // utjämning av ålderskurvan (högre = jämnare). Vald med korsvalidering, se validate.js
+
 /**
- * Poisson-frekvens med multiplikativa faktorer (ålder × effekt × drivmedel × bilvärde), anpassad med
- * iterativ skalning. Varje faktor krymps mot 1 när underlaget är litet. Tar sedan fram trovärdighetsparametern k
- * (Gamma-Poisson) med momentmetoden: τ² = Σ[(Y−e)²−e] / Σe², k = 1/τ².
+ * Poisson-frekvens: en jämn ålderskurva (linjär spline i log-skala med andraderivatastraff) × effekt × drivmedel × bilvärde.
+ * Anpassas växelvis (iterativ skalning). Faktorerna krymps mot 1 när underlaget är litet. Sedan skattas
+ * trovärdighetsparametern k (Gamma-Poisson) med momentmetoden: τ² = Σ[(Y−e)²−e] / Σe², k = 1/τ².
  */
-function fitFrequency(rows) {
+function fitFrequency(rows, lambda = AGE_LAMBDA) {
   const dims = {
-    alder: { of: r => ageBand(r.age), n: AGE_BANDS.length },
     hk: { of: r => hpBand(r.car.hk), n: HP_LABELS.length },
     drivmedel: { of: r => r.car.drivmedel, keys: [...new Set(rows.map(r => r.car.drivmedel))] },
     varde: { of: r => valueBand(r.car.varde), n: VALUE_LABELS.length },
@@ -35,40 +50,66 @@ function fitFrequency(rows) {
   const levels = d => d.keys ?? [...Array(d.n).keys()];
   const f = Object.fromEntries(Object.entries(dims).map(([k, d]) => [k, Object.fromEntries(levels(d).map(l => [l, 1]))]));
   const total = sum(rows, r => r.krockar) / sum(rows, r => r.ar);
-  const mu = r => r.ar * total * Object.entries(dims).reduce((p, [k, d]) => p * f[k][d.of(r)], 1);
-  for (let it = 0; it < 50; it++) {
+  const K = AGE_KNOTS.length;
+  const theta = Array(K).fill(Math.log(total));          // log-frekvens vid varje knut
+  const basis = rows.map(r => ageBasis(r.age));
+  const other = r => Object.entries(dims).reduce((p, [k, d]) => p * f[k][d.of(r)], 1);
+  const ageMu = (r, i) => Math.exp(basis[i].reduce((s, [j, w]) => s + w * theta[j], 0));
+  const mu = (r, i) => r.ar * ageMu(r, i) * other(r);
+
+  for (let it = 0; it < 40; it++) {
+    // (a) ålderskurvan: penaliserad Poisson-Newton med övriga faktorer som offset
+    for (let n = 0; n < 3; n++) {
+      const g = Array(K).fill(0), H = Array.from({ length: K }, () => Array(K).fill(0));
+      rows.forEach((r, i) => {
+        const m = mu(r, i);
+        for (const [j, w] of basis[i]) {
+          g[j] += w * (r.krockar - m);
+          for (const [k2, w2] of basis[i]) H[j][k2] += w * w2 * m;
+        }
+      });
+      // andraderivatastraff λ·Σ(θ[j-1] − 2θ[j] + θ[j+1])², uppdelat i gradient och Hessian
+      for (let j = 1; j < K - 1; j++) {
+        const c = [[j - 1, 1], [j, -2], [j + 1, 1]], d2 = c.reduce((s, [k2, w]) => s + w * theta[k2], 0);
+        for (const [k2, w] of c) { g[k2] -= lambda * w * d2; for (const [k3, w3] of c) H[k2][k3] += lambda * w * w3; }
+      }
+      for (let j = 0; j < K; j++) H[j][j] += 1e-6;
+      const step = solve(H, g);
+      for (let j = 0; j < K; j++) theta[j] += clamp(step[j], -1, 1);
+    }
+    // (b) övriga faktorer, med kurvan som offset
     for (const [k, d] of Object.entries(dims)) {
       for (const l of levels(d)) {
-        const rs = rows.filter(r => d.of(r) === l);
-        if (!rs.length) continue;
-        const obs = sum(rs, r => r.krockar);
-        const exp = sum(rs, r => mu(r) / f[k][l]);       // förväntat om denna faktor vore 1
-        const raw = obs / exp;
-        // krympning enligt förväntat antal krockar: stabilt även för små nivåer
-        f[k][l] = 1 + (raw - 1) * (obs / (obs + K_SHRINK));
+        let obs = 0, exp = 0;
+        rows.forEach((r, i) => { if (d.of(r) === l) { obs += r.krockar; exp += mu(r, i) / f[k][l]; } });
+        if (!exp) continue;
+        f[k][l] = 1 + (obs / exp - 1) * (obs / (obs + K_SHRINK));
       }
     }
   }
-  // Åldersfaktorn bär bas-nivån så att frekvensen per åldersband är direkt tolkbar.
-  const perAldersband = Object.values(f.alder).map(x => x * total);
-  const prior = r => perAldersband[ageBand(r.age)] * f.hk[hpBand(r.car.hk)] * f.drivmedel[r.car.drivmedel] * f.varde[valueBand(r.car.varde)];
   // Normalisera så att totalt förväntat antal krockar = observerat
-  const norm = sum(rows, r => r.krockar) / sum(rows, r => r.ar * prior(r));
-  const pa = perAldersband.map(x => x * norm);
-  const prior2 = r => pa[ageBand(r.age)] * f.hk[hpBand(r.car.hk)] * f.drivmedel[r.car.drivmedel] * f.varde[valueBand(r.car.varde)];
-  const num = sum(rows, r => { const e = r.ar * prior2(r); return (r.krockar - e) ** 2 - e; });
-  const den = sum(rows, r => (r.ar * prior2(r)) ** 2);
+  const expTot = rows.reduce((s, r, i) => s + mu(r, i), 0);
+  const shift = Math.log(sum(rows, r => r.krockar) / expTot);
+  for (let j = 0; j < K; j++) theta[j] += shift;
+  const prior = (r, i) => ageMu(r, i) * other(r);
+  const num = rows.reduce((s, r, i) => { const e = r.ar * prior(r, i); return s + (r.krockar - e) ** 2 - e; }, 0);
+  const den = rows.reduce((s, r, i) => s + (r.ar * prior(r, i)) ** 2, 0);
   const tau2 = num / den;
   const k = tau2 > 0.01 ? clamp(1 / tau2, 1, 100) : 100;
-  return { perAldersband: pa, hk: Object.values(f.hk), drivmedel: f.drivmedel, varde: Object.values(f.varde), tau2, k };
+  // Medelfrekvens per åldersband (för visning)
+  const perAldersband = AGE_BANDS.map((_, b) => {
+    const idx = rows.map((r, i) => i).filter(i => ageBand(rows[i].age) === b);
+    return sum(idx, i => rows[i].ar * ageMu(rows[i], i)) / sum(idx, i => rows[i].ar);
+  });
+  return { perAldersband, alderKnutar: AGE_KNOTS, alderLogF: [...theta], hk: Object.values(f.hk), drivmedel: f.drivmedel, varde: Object.values(f.varde), tau2, k, lambda };
 }
 
-export function calibrate(data = loadData(), { skipBacktest = false } = {}) {
+export function calibrate(data = loadData(), { skipBacktest = false, lambda = AGE_LAMBDA } = {}) {
   const now = new Date();
   const rows = prepare(data, now);
 
   // 1) Krockfrekvens (ålder × effekt × drivmedel × bilvärde) + trovärdighet
-  const fr = fitFrequency(rows);
+  const fr = fitFrequency(rows, lambda);
   const perAldersband = fr.perAldersband;
   const snittFrekvens = sum(rows, r => r.krockar) / sum(rows, r => r.ar);
 
@@ -121,7 +162,7 @@ export function calibrate(data = loadData(), { skipBacktest = false } = {}) {
     trovardighet: { k: fr.k, tau2: fr.tau2 },  // Gamma-Poisson: k = 1/τ², skattat ur datan
     skala: 1,
     frekvens: { snitt: snittFrekvens, perAldersband, bandNamn: AGE_BANDS.map(x => x[2]),
-      hk: fr.hk, drivmedel: fr.drivmedel, varde: fr.varde, hkNamn: HP_LABELS, vardeNamn: VALUE_LABELS },
+      alderKnutar: fr.alderKnutar, alderLogF: fr.alderLogF, hk: fr.hk, drivmedel: fr.drivmedel, varde: fr.varde, hkNamn: HP_LABELS, vardeNamn: VALUE_LABELS },
     smaskador: { perDrivmedel: perDrivmedelSma, snitt: smaSnitt },
     allvar: { a, b, hk: hkF, drivmedel: fuelF, hkNamn: HP_LABELS },
     regionSnittIdx: 1,

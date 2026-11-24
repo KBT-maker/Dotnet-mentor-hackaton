@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "kalibrerad": "2026-11-24T21:05:33.798Z",
+  "kalibrerad": "2026-11-24T21:22:41.697Z",
   "underlag": {
     "kundrader": 4815,
     "kundar": 14273,
@@ -11,19 +11,19 @@
   "malSkadekvot": 0.7,
   "minPremie": 1990,
   "trovardighet": {
-    "k": 1.8565802697444742,
-    "tau2": 0.538624704946171
+    "k": 1.8307649373060009,
+    "tau2": 0.5462197683726211
   },
-  "skala": 1.0118475745611193,
+  "skala": 1.0110818439340994,
   "frekvens": {
     "snitt": 0.062005184614306735,
     "perAldersband": [
-      0.10049892161212633,
-      0.07899370560777914,
-      0.05376486195404055,
-      0.05786818746414012,
-      0.052780508990434453,
-      0.06916252448603936
+      0.11995404914722031,
+      0.08946955421464065,
+      0.06174777437849272,
+      0.056254174450188925,
+      0.06014750931001372,
+      0.07549757454496642
     ],
     "bandNamn": [
       "18–24 år",
@@ -33,26 +33,52 @@
       "65–79 år",
       "80+ år"
     ],
+    "alderKnutar": [
+      18,
+      22,
+      26,
+      30,
+      35,
+      40,
+      50,
+      60,
+      70,
+      80,
+      90
+    ],
+    "alderLogF": [
+      -1.8346890226136232,
+      -2.0789730966914357,
+      -2.3424826338557305,
+      -2.609414642720624,
+      -2.79326144851874,
+      -2.828431026044175,
+      -2.8533340452028795,
+      -2.8957950953603273,
+      -2.865699811984003,
+      -2.6897169720550305,
+      -2.4640065009865197
+    ],
     "hk": [
-      0.8189913078150135,
-      0.9665007705495047,
-      1.0424846432941077,
-      1.1419489086179844,
-      1.5585626540132038
+      0.7939431318315802,
+      0.9227969197071947,
+      0.9936639603465031,
+      1.1028448941199545,
+      1.488068245133511
     ],
     "drivmedel": {
-      "bensin": 1.0061478351402986,
-      "el": 1.1325038933965172,
-      "hybrid": 0.9505601729590843,
-      "diesel": 1.1508703630026629
+      "bensin": 0.9569948721986854,
+      "el": 1.0714727354612026,
+      "hybrid": 0.9033472393198768,
+      "diesel": 1.1077689785674627
     },
     "varde": [
-      0.9133555026077462,
-      0.9695641559264847,
-      0.9532496647048403,
-      1.058913124887672,
-      1.1780882652087241,
-      1.2790715131018813
+      0.877994048186387,
+      0.9375635444738775,
+      0.9237999392385514,
+      1.028858844681958,
+      1.1452063394877305,
+      1.2381027409338543
     ],
     "hkNamn": [
       "<100 hk",
@@ -117,16 +143,16 @@
             "grupp": "80+ år",
             "n": 188,
             "premieIdagPerAr": 5358,
-            "premieNyPerAr": 7487,
+            "premieNyPerAr": 7268,
             "skadekostnadPerAr": 5651,
             "skadekvotIdag": 1.05,
-            "skadekvotNy": 0.75
+            "skadekvotNy": 0.78
           },
           {
             "grupp": "65–79 år",
             "n": 332,
             "premieIdagPerAr": 5620,
-            "premieNyPerAr": 6247,
+            "premieNyPerAr": 6246,
             "skadekostnadPerAr": 3315,
             "skadekvotIdag": 0.59,
             "skadekvotNy": 0.53
@@ -135,16 +161,16 @@
             "grupp": "50–64 år",
             "n": 317,
             "premieIdagPerAr": 5893,
-            "premieNyPerAr": 7000,
+            "premieNyPerAr": 6279,
             "skadekostnadPerAr": 6278,
             "skadekvotIdag": 1.07,
-            "skadekvotNy": 0.9
+            "skadekvotNy": 1
           },
           {
             "grupp": "30–49 år",
             "n": 2950,
             "premieIdagPerAr": 5924,
-            "premieNyPerAr": 6892,
+            "premieNyPerAr": 6955,
             "skadekostnadPerAr": 4583,
             "skadekvotIdag": 0.77,
             "skadekvotNy": 0.66
@@ -153,7 +179,7 @@
             "grupp": "25–29 år",
             "n": 601,
             "premieIdagPerAr": 5754,
-            "premieNyPerAr": 9643,
+            "premieNyPerAr": 9645,
             "skadekostnadPerAr": 7295,
             "skadekvotIdag": 1.27,
             "skadekvotNy": 0.76
@@ -162,10 +188,10 @@
             "grupp": "18–24 år",
             "n": 427,
             "premieIdagPerAr": 4568,
-            "premieNyPerAr": 9794,
+            "premieNyPerAr": 10216,
             "skadekostnadPerAr": 7382,
             "skadekvotIdag": 1.62,
-            "skadekvotNy": 0.75
+            "skadekvotNy": 0.72
           }
         ]
       },
@@ -176,7 +202,7 @@
             "grupp": "bensin",
             "n": 1533,
             "premieIdagPerAr": 4503,
-            "premieNyPerAr": 4839,
+            "premieNyPerAr": 4834,
             "skadekostnadPerAr": 3291,
             "skadekvotIdag": 0.73,
             "skadekvotNy": 0.68
@@ -185,16 +211,16 @@
             "grupp": "el",
             "n": 889,
             "premieIdagPerAr": 7543,
-            "premieNyPerAr": 12449,
+            "premieNyPerAr": 12461,
             "skadekostnadPerAr": 9031,
             "skadekvotIdag": 1.2,
-            "skadekvotNy": 0.73
+            "skadekvotNy": 0.72
           },
           {
             "grupp": "hybrid",
             "n": 1030,
             "premieIdagPerAr": 7205,
-            "premieNyPerAr": 8974,
+            "premieNyPerAr": 8983,
             "skadekostnadPerAr": 6314,
             "skadekvotIdag": 0.88,
             "skadekvotNy": 0.7
@@ -217,7 +243,7 @@
             "grupp": "100–250 tkr",
             "n": 1983,
             "premieIdagPerAr": 5792,
-            "premieNyPerAr": 7430,
+            "premieNyPerAr": 7414,
             "skadekostnadPerAr": 5168,
             "skadekvotIdag": 0.89,
             "skadekvotNy": 0.7
@@ -226,7 +252,7 @@
             "grupp": "250–500 tkr",
             "n": 1412,
             "premieIdagPerAr": 8722,
-            "premieNyPerAr": 12131,
+            "premieNyPerAr": 12153,
             "skadekostnadPerAr": 7623,
             "skadekvotIdag": 0.87,
             "skadekvotNy": 0.63
@@ -235,7 +261,7 @@
             "grupp": "<100 tkr",
             "n": 1266,
             "premieIdagPerAr": 3672,
-            "premieNyPerAr": 3854,
+            "premieNyPerAr": 3855,
             "skadekostnadPerAr": 2916,
             "skadekvotIdag": 0.79,
             "skadekvotNy": 0.76
@@ -244,10 +270,10 @@
             "grupp": "500 tkr+",
             "n": 154,
             "premieIdagPerAr": 15616,
-            "premieNyPerAr": 25946,
+            "premieNyPerAr": 26130,
             "skadekostnadPerAr": 24041,
             "skadekvotIdag": 1.54,
-            "skadekvotNy": 0.93
+            "skadekvotNy": 0.92
           }
         ]
       },
@@ -258,7 +284,7 @@
             "grupp": "0",
             "n": 4086,
             "premieIdagPerAr": 5810,
-            "premieNyPerAr": 6700,
+            "premieNyPerAr": 6696,
             "skadekostnadPerAr": 780,
             "skadekvotIdag": 0.13,
             "skadekvotNy": 0.12
@@ -267,28 +293,28 @@
             "grupp": "0,25–0,5",
             "n": 240,
             "premieIdagPerAr": 5767,
-            "premieNyPerAr": 10566,
+            "premieNyPerAr": 10687,
             "skadekostnadPerAr": 22677,
             "skadekvotIdag": 3.93,
-            "skadekvotNy": 2.15
+            "skadekvotNy": 2.12
           },
           {
             "grupp": "<0,25",
             "n": 223,
             "premieIdagPerAr": 5147,
-            "premieNyPerAr": 6860,
+            "premieNyPerAr": 6767,
             "skadekostnadPerAr": 8709,
             "skadekvotIdag": 1.69,
-            "skadekvotNy": 1.27
+            "skadekvotNy": 1.29
           },
           {
             "grupp": "≥0,5",
             "n": 266,
             "premieIdagPerAr": 7083,
-            "premieNyPerAr": 17793,
+            "premieNyPerAr": 17978,
             "skadekostnadPerAr": 54544,
             "skadekvotIdag": 7.7,
-            "skadekvotNy": 3.07
+            "skadekvotNy": 3.03
           }
         ]
       }

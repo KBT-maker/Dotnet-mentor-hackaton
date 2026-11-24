@@ -2,6 +2,17 @@
 export const AGE_BANDS = [[18, 24, '18–24 år'], [25, 29, '25–29 år'], [30, 49, '30–49 år'],
   [50, 64, '50–64 år'], [65, 79, '65–79 år'], [80, 200, '80+ år']];
 export const ageBand = a => AGE_BANDS.findIndex(([lo, hi]) => a >= lo && a <= hi);
+// Jämn ålderskurva: linjär interpolation i log-frekvens mellan knutar (konstant utanför ändpunkterna)
+export const AGE_KNOTS = [18, 22, 26, 30, 35, 40, 50, 60, 70, 80, 90];
+export function ageBasis(age) {
+  const k = AGE_KNOTS, n = k.length;
+  if (age <= k[0]) return [[0, 1]];
+  if (age >= k[n - 1]) return [[n - 1, 1]];
+  let i = 0; while (age > k[i + 1]) i++;
+  const w = (age - k[i]) / (k[i + 1] - k[i]);
+  return [[i, 1 - w], [i + 1, w]];
+}
+export const ageCurve = (m, age) => Math.exp(ageBasis(age).reduce((s, [j, w]) => s + w * m.frekvens.alderLogF[j], 0));
 export const HP_LABELS = ['<100 hk', '100–199 hk', '200–299 hk', '300–399 hk', '400+ hk'];
 export const hpBand = hk => hk < 100 ? 0 : hk < 200 ? 1 : hk < 300 ? 2 : hk < 400 ? 3 : 4;
 export const VALUE_EDGES = [100000, 200000, 300000, 400000, 500000];
@@ -16,7 +27,7 @@ export const valueBand = v => VALUE_EDGES.filter(e => v >= e).length;
 export function price(m, { age, car, crashes = null, years = 5, regionIdx = 1 }) {
   const ab = ageBand(age);
   // Förväntad krockfrekvens utan egen historik: åldersgrupp × effekt × drivmedel × bilvärde (multiplikativt, Poisson-kalibrerat)
-  const ageFreq = m.frekvens.perAldersband[ab];
+  const ageFreq = m.frekvens.alderLogF ? ageCurve(m, age) : m.frekvens.perAldersband[ab];
   const fq = m.frekvens;
   const fqHk = fq.hk?.[hpBand(car.hk)] ?? 1, fqFuel = fq.drivmedel?.[car.drivmedel] ?? 1, fqVal = fq.varde?.[valueBand(car.varde)] ?? 1;
   const prior = ageFreq * fqHk * fqFuel * fqVal;

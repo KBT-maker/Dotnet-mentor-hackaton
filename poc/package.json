@@ -6,6 +6,8 @@
   "scripts": {
     "calibrate": "node calibrate.js",
     "start": "node server.js",
+    "validate": "node validate.js",
+    "monitor": "node monitor.js",
     "test": "node --test"
   }
 }
