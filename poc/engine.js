@@ -101,11 +101,11 @@ export function createEngine({ model, data, mockBase }) {
     const bd = breakdown(model, ref, { age: pn.alder, car, crashes: krockar5, regionIdx });
     const snitt = model.frekvens.snitt;
     const drivare = [
-      { namn: 'Age', text: `You are ${pn.alder}. Drivers in your age group have a crash in about ${(r.prior * 100).toFixed(1)}% of years, compared with ${(snitt * 100).toFixed(1)}% for all drivers.`, faktor: r.prior / snitt },
+      { namn: 'Age', text: `You are ${pn.alder}. Drivers in your age group have a crash in about ${(r.ageFreq * 100).toFixed(1)}% of years, compared with ${(snitt * 100).toFixed(1)}% for all drivers.`, faktor: r.ageFreq / snitt },
       { namn: 'Crash history', text: krockar5 == null ? 'No crash history given, so we assume the average for your age group.' : krockar5 === 0 ? 'No crashes in the last five years.' : `${krockar5} crash${krockar5 > 1 ? 'es' : ''} in the last five years. We expect a crash in about ${(r.freq * 100).toFixed(1)}% of years (your own history counts for ${Math.round(r.z * 100)}% of that estimate).`, faktor: r.freq / r.prior },
       { namn: 'Car value', text: `A car worth ${kr(car.varde)} costs about ${kr(r.sev)} to repair after a crash, plus about ${kr(r.smaskador)} a year for theft, fire and glass damage.`, faktor: null },
-      { namn: 'Engine power', text: `${hk} horsepower`, faktor: r.hpF },
-      { namn: 'Fuel type', text: FUEL[car.drivmedel] || car.drivmedel, faktor: r.fuelF },
+      { namn: 'Engine power', text: `${hk} horsepower`, faktor: r.hpF * r.fqHk },
+      { namn: 'Fuel type', text: FUEL[car.drivmedel] || car.drivmedel, faktor: r.fuelF * r.fqFuel },
       { namn: 'Where you live', text: `${spar.body.folkbokford.ort} (${spar.body.folkbokford.lan}): theft risk is ${regionIdx.toFixed(2)}× the national average (an estimate, not based on real data).`, faktor: regionIdx },
     ];
     const meddelande = `Your yearly price is ${kr(r.pris)}.` +

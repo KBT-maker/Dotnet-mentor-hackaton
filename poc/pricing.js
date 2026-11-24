@@ -4,6 +4,9 @@ export const AGE_BANDS = [[18, 24, '18–24 år'], [25, 29, '25–29 år'], [30,
 export const ageBand = a => AGE_BANDS.findIndex(([lo, hi]) => a >= lo && a <= hi);
 export const HP_LABELS = ['<100 hk', '100–199 hk', '200–299 hk', '300–399 hk', '400+ hk'];
 export const hpBand = hk => hk < 100 ? 0 : hk < 200 ? 1 : hk < 300 ? 2 : hk < 400 ? 3 : 4;
+export const VALUE_EDGES = [100000, 200000, 300000, 400000, 500000];
+export const VALUE_LABELS = ['<100 tkr', '100–200 tkr', '200–300 tkr', '300–400 tkr', '400–500 tkr', '500 tkr+'];
+export const valueBand = v => VALUE_EDGES.filter(e => v >= e).length;
 
 /**
  * @param m   kalibrerad modell (faktorer.json)
@@ -12,10 +15,18 @@ export const hpBand = hk => hk < 100 ? 0 : hk < 200 ? 1 : hk < 300 ? 2 : hk < 40
  */
 export function price(m, { age, car, crashes = null, years = 5, regionIdx = 1 }) {
   const ab = ageBand(age);
-  const prior = m.frekvens.perAldersband[ab];
-  let z = 0, own = 0;
-  if (crashes != null && years > 0) { z = years / (years + m.trovardighetK); own = crashes / years; }
-  const freq = z * own + (1 - z) * prior;
+  // Förväntad krockfrekvens utan egen historik: åldersgrupp × effekt × drivmedel × bilvärde (multiplikativt, Poisson-kalibrerat)
+  const ageFreq = m.frekvens.perAldersband[ab];
+  const fq = m.frekvens;
+  const fqHk = fq.hk?.[hpBand(car.hk)] ?? 1, fqFuel = fq.drivmedel?.[car.drivmedel] ?? 1, fqVal = fq.varde?.[valueBand(car.varde)] ?? 1;
+  const prior = ageFreq * fqHk * fqFuel * fqVal;
+  // Gamma-Poisson-trovärdighet: posterior = prior × (k + krockar) / (k + förväntade krockar). k skattas ur datan (se calibrate.js).
+  let z = 0, own = 0, freq = prior;
+  if (crashes != null && years > 0) {
+    const e = years * prior, k = m.trovardighet.k;
+    z = e / (e + k); own = crashes / years;
+    freq = prior * (k + crashes) / (k + e);
+  }
 
   const hpF = m.allvar.hk[hpBand(car.hk)];
   const fuelF = m.allvar.drivmedel[car.drivmedel] ?? 1;
@@ -27,5 +38,5 @@ export function price(m, { age, car, crashes = null, years = 5, regionIdx = 1 })
   const forvantad = krockkostnad + smaskador;
   const raw = forvantad / m.malSkadekvot;
   const pris = Math.round(Math.max(m.minPremie, raw));
-  return { ab, prior, z, own, freq, sev, hpF, fuelF, attr, krockkostnad, smaskador, forvantad, raw, pris, minAvgransad: raw < m.minPremie };
+  return { ab, prior, ageFreq, fqHk, fqFuel, fqVal, z, own, freq, sev, hpF, fuelF, attr, krockkostnad, smaskador, forvantad, raw, pris, minAvgransad: raw < m.minPremie };
 }

@@ -3,26 +3,73 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { loadData, parsePersonnummer } from './lib.js';
-import { AGE_BANDS, HP_LABELS, ageBand, hpBand, price } from './pricing.js';
+import { AGE_BANDS, HP_LABELS, VALUE_LABELS, ageBand, hpBand, valueBand, price } from './pricing.js';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 export const MODEL_FILE = path.join(here, 'faktorer.json');
 const clamp = (x, lo, hi) => Math.min(hi, Math.max(lo, x));
 const sum = (a, f) => a.reduce((s, x) => s + f(x), 0);
 
-export function calibrate(data = loadData()) {
-  const now = new Date();
-  const rows = data.kunder.map(k => {
+export function prepare(data, now = new Date()) {
+  return data.kunder.map(k => {
     const car = data.bilar.get(k.regnummer);
     const p = parsePersonnummer(k.personnummer, now);
     return { ...k, car, age: p.alder };
   }).filter(r => r.car && r.age >= 18);
+}
 
-  // 1) Krockfrekvens per åldersband
-  const perAldersband = AGE_BANDS.map((_, i) => {
-    const rs = rows.filter(r => ageBand(r.age) === i);
-    return sum(rs, r => r.krockar) / sum(rs, r => r.ar);
-  });
+const K_SHRINK = 25; // förväntade krockar i en nivå som krävs för 50 % tilltro till nivåns egen frekvens
+
+/**
+ * Poisson-frekvens med multiplikativa faktorer (ålder × effekt × drivmedel × bilvärde), anpassad med
+ * iterativ skalning. Varje faktor krymps mot 1 när underlaget är litet. Tar sedan fram trovärdighetsparametern k
+ * (Gamma-Poisson) med momentmetoden: τ² = Σ[(Y−e)²−e] / Σe², k = 1/τ².
+ */
+function fitFrequency(rows) {
+  const dims = {
+    alder: { of: r => ageBand(r.age), n: AGE_BANDS.length },
+    hk: { of: r => hpBand(r.car.hk), n: HP_LABELS.length },
+    drivmedel: { of: r => r.car.drivmedel, keys: [...new Set(rows.map(r => r.car.drivmedel))] },
+    varde: { of: r => valueBand(r.car.varde), n: VALUE_LABELS.length },
+  };
+  const levels = d => d.keys ?? [...Array(d.n).keys()];
+  const f = Object.fromEntries(Object.entries(dims).map(([k, d]) => [k, Object.fromEntries(levels(d).map(l => [l, 1]))]));
+  const total = sum(rows, r => r.krockar) / sum(rows, r => r.ar);
+  const mu = r => r.ar * total * Object.entries(dims).reduce((p, [k, d]) => p * f[k][d.of(r)], 1);
+  for (let it = 0; it < 50; it++) {
+    for (const [k, d] of Object.entries(dims)) {
+      for (const l of levels(d)) {
+        const rs = rows.filter(r => d.of(r) === l);
+        if (!rs.length) continue;
+        const obs = sum(rs, r => r.krockar);
+        const exp = sum(rs, r => mu(r) / f[k][l]);       // förväntat om denna faktor vore 1
+        const raw = obs / exp;
+        // krympning enligt förväntat antal krockar: stabilt även för små nivåer
+        f[k][l] = 1 + (raw - 1) * (obs / (obs + K_SHRINK));
+      }
+    }
+  }
+  // Åldersfaktorn bär bas-nivån så att frekvensen per åldersband är direkt tolkbar.
+  const perAldersband = Object.values(f.alder).map(x => x * total);
+  const prior = r => perAldersband[ageBand(r.age)] * f.hk[hpBand(r.car.hk)] * f.drivmedel[r.car.drivmedel] * f.varde[valueBand(r.car.varde)];
+  // Normalisera så att totalt förväntat antal krockar = observerat
+  const norm = sum(rows, r => r.krockar) / sum(rows, r => r.ar * prior(r));
+  const pa = perAldersband.map(x => x * norm);
+  const prior2 = r => pa[ageBand(r.age)] * f.hk[hpBand(r.car.hk)] * f.drivmedel[r.car.drivmedel] * f.varde[valueBand(r.car.varde)];
+  const num = sum(rows, r => { const e = r.ar * prior2(r); return (r.krockar - e) ** 2 - e; });
+  const den = sum(rows, r => (r.ar * prior2(r)) ** 2);
+  const tau2 = num / den;
+  const k = tau2 > 0.01 ? clamp(1 / tau2, 1, 100) : 100;
+  return { perAldersband: pa, hk: Object.values(f.hk), drivmedel: f.drivmedel, varde: Object.values(f.varde), tau2, k };
+}
+
+export function calibrate(data = loadData(), { skipBacktest = false } = {}) {
+  const now = new Date();
+  const rows = prepare(data, now);
+
+  // 1) Krockfrekvens (ålder × effekt × drivmedel × bilvärde) + trovärdighet
+  const fr = fitFrequency(rows);
+  const perAldersband = fr.perAldersband;
   const snittFrekvens = sum(rows, r => r.krockar) / sum(rows, r => r.ar);
 
   // 2) Småskador (stöld/brand/glas) = kostnad för kunder utan krock, som andel av bilens värde, per drivmedel
@@ -65,15 +112,16 @@ export function calibrate(data = loadData()) {
   const fuelF = residual(r => r.car.drivmedel, fuels, r => sev0(r) * hkF[hpBand(r.car.hk)]);
 
   const model = {
-    version: 1,
+    version: 2,
     kalibrerad: now.toISOString(),
     underlag: { kundrader: rows.length, kundar: sum(rows, r => r.ar), krockar: sum(rows, r => r.krockar),
       total_skadekostnad: sum(rows, r => r.skadekostnad), total_premie: sum(rows, r => r.premie) },
     malSkadekvot: 0.70,          // 70 % av premien ska gå till skador, resten till drift, provision och vinst
     minPremie: 1990,
-    trovardighetK: 10,           // ~år av egen historik som krävs för 50 % tilltro till egen krockfrekvens
+    trovardighet: { k: fr.k, tau2: fr.tau2 },  // Gamma-Poisson: k = 1/τ², skattat ur datan
     skala: 1,
-    frekvens: { snitt: snittFrekvens, perAldersband, bandNamn: AGE_BANDS.map(x => x[2]) },
+    frekvens: { snitt: snittFrekvens, perAldersband, bandNamn: AGE_BANDS.map(x => x[2]),
+      hk: fr.hk, drivmedel: fr.drivmedel, varde: fr.varde, hkNamn: HP_LABELS, vardeNamn: VALUE_LABELS },
     smaskador: { perDrivmedel: perDrivmedelSma, snitt: smaSnitt },
     allvar: { a, b, hk: hkF, drivmedel: fuelF, hkNamn: HP_LABELS },
     regionSnittIdx: 1,
@@ -84,7 +132,7 @@ export function calibrate(data = loadData()) {
     s + r.ar * price(model, { age: r.age, car: r.car, crashes: r.krockar, years: r.ar }).forvantad, 0);
   model.skala = clamp(model.underlag.total_skadekostnad / pred, 0.5, 2);
 
-  model.backtest = backtest(model, rows);
+  if (!skipBacktest) model.backtest = backtest(model, rows);
   return model;
 }
 
