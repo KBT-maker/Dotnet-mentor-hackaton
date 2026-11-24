@@ -1,9 +1,3 @@
-# MÖTESLÄNK FÖR PRESENTATION
-Gå med som companion mode och dela er skärm vid redovisningstillfället.
-https://meet.google.com/vbx-wnza-gmo
-
-Länk till presentationen: https://docs.google.com/presentation/d/1z6467esVCBdS1J7Vu2mZv2rwWWsRtZPzUWmoQrSYScc/edit?usp=sharing
-
 # Dotnet Mentor Hackathon: Prissättning av bilförsäkring
 
 Dotnet Mentor har fått ett nytt uppdrag. Försäkringsbolaget Nordisk Bilförsäkring AB vill ha en lösning som räknar fram vad en bilförsäkring ska kosta, och har anlitat oss för att ta fram den. Under hackathonet är er grupp konsultteamet som ska leverera lösningen.
