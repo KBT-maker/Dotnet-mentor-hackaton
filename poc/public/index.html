@@ -1,0 +1,179 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Nordisk Bilförsäkring – Car insurance price calculator</title>
+<style>
+  :root { --navy:#14213d; --gold:#e8a23d; --bg:#f5f4ef; --card:#fff; --mut:#5b6577; --ok:#1c7c54; --warn:#b36b00; --bad:#b3261e; --line:#e3e1d8; }
+  * { box-sizing: border-box; }
+  body { margin:0; font:15px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif; background:var(--bg); color:var(--navy); }
+  header { background:var(--navy); color:#fff; padding:18px 28px; display:flex; align-items:baseline; gap:16px; }
+  header h1 { margin:0; font-size:20px; } header span { color:#aab4c8; font-size:13px; }
+  nav { display:flex; gap:4px; padding:0 28px; background:var(--navy); }
+  nav button { background:none; border:0; color:#aab4c8; padding:10px 16px; cursor:pointer; font:inherit; border-bottom:3px solid transparent; }
+  nav button.on { color:#fff; border-color:var(--gold); }
+  main { max-width:1100px; margin:24px auto; padding:0 20px; }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:20px; margin-bottom:18px; }
+  .row { display:flex; gap:14px; flex-wrap:wrap; align-items:flex-end; }
+  label { display:flex; flex-direction:column; font-size:12px; color:var(--mut); gap:4px; flex:1; min-width:170px; }
+  input, select { font:inherit; padding:9px 11px; border:1px solid #c9c6ba; border-radius:8px; color:var(--navy); background:#fff; }
+  button.primary { background:var(--gold); color:var(--navy); border:0; padding:10px 22px; border-radius:8px; font:inherit; font-weight:600; cursor:pointer; }
+  button.chip { background:#eef0f5; color:var(--navy); border:0; padding:5px 10px; border-radius:14px; font-size:12px; cursor:pointer; }
+  button.chip:hover { background:#dfe3ec; }
+  .chips { display:flex; gap:6px; flex-wrap:wrap; margin-top:12px; align-items:center; font-size:12px; color:var(--mut); }
+  .result { border-left:6px solid var(--ok); }
+  .result.MANUELL { border-color:var(--warn); } .result.AVSLAG { border-color:var(--bad); }
+  .price { font-size:44px; font-weight:700; letter-spacing:-1px; } .price small { font-size:16px; font-weight:500; color:var(--mut); }
+  .tag { display:inline-block; font-size:11px; text-transform:uppercase; letter-spacing:.06em; padding:2px 8px; border-radius:10px; color:#fff; background:var(--ok); }
+  .MANUELL .tag { background:var(--warn); } .AVSLAG .tag { background:var(--bad); }
+  h2 { font-size:16px; margin:0 0 10px; } h3 { font-size:13px; text-transform:uppercase; letter-spacing:.05em; color:var(--mut); margin:18px 0 8px; }
+  table { border-collapse:collapse; width:100%; font-size:13.5px; } th, td { text-align:left; padding:7px 10px; border-bottom:1px solid var(--line); } th { color:var(--mut); font-weight:600; font-size:12px; }
+  td.n, th.n { text-align:right; font-variant-numeric:tabular-nums; }
+  .f { display:inline-block; min-width:62px; text-align:center; padding:1px 8px; border-radius:10px; font-size:12px; font-weight:600; }
+  .up { background:#fde8e6; color:var(--bad); } .down { background:#e2f4ea; color:var(--ok); } .flat { background:#eef0f5; color:var(--mut); }
+  .grid { display:grid; grid-template-columns:1fr 1fr; gap:18px; } @media (max-width:800px){ .grid{grid-template-columns:1fr;} }
+  .mut { color:var(--mut); font-size:13px; }
+  .bar { height:10px; border-radius:5px; background:#eef0f5; overflow:hidden; display:flex; margin:6px 0; } .bar i { display:block; height:100%; }
+  code { background:#eef0f5; padding:1px 5px; border-radius:4px; font-size:12.5px; }
+  .warnbox { background:#fff6e0; border:1px solid #f0d9a0; border-radius:8px; padding:10px 12px; font-size:13px; margin-top:12px; }
+  [hidden] { display:none !important; }
+</style>
+</head>
+<body>
+<header><h1>Nordisk Bilförsäkring · Price calculator</h1><span>Demo version · full coverage for passenger cars · the population, vehicle and theft data are simulated</span></header>
+<nav id="tabs">
+  <button data-t="quote" class="on">Get a price</button>
+  <button data-t="batch">All 300 applications</button>
+  <button data-t="model">How it works</button>
+</nav>
+<main>
+<section id="quote">
+  <div class="card">
+    <form id="form" class="row">
+      <label>Personal ID number<input id="pnr" placeholder="YYYYMMDD-XXXX" required></label>
+      <label>License plate<input id="reg" placeholder="ABC123" required></label>
+      <label>Crashes in the last 5 years (optional)<input id="krockar" type="number" min="0" placeholder="unknown"></label>
+      <button class="primary">Get my price</button>
+    </form>
+    <div class="chips"><span>Sample application:</span><select id="app" style="padding:4px 8px"></select><span>Try an example:</span><span id="demos"></span></div>
+  </div>
+  <div id="out"></div>
+</section>
+<section id="batch" hidden>
+  <div class="card"><div class="row"><button class="primary" id="runBatch">Run all applications</button><span class="mut" id="batchInfo"></span></div></div>
+  <div id="batchOut"></div>
+</section>
+<section id="model" hidden><div id="modelOut"></div></section>
+</main>
+<script>
+const $ = s => document.querySelector(s);
+const kr = n => Math.round(n).toLocaleString('en-US') + ' kr';
+const yrs = n => String(n).replace(' år', ' yrs');
+const FUEL = { bensin: 'Petrol', diesel: 'Diesel', el: 'Electric', hybrid: 'Hybrid' };
+const SEG = { 'Ålder': 'Age', 'Drivmedel': 'Fuel type', 'Bilens värde': 'Car value', 'Krockar per år hos oss': 'Crashes per year with us' };
+const GRP = g => FUEL[g] || yrs(g).replace(' tkr', 'k kr').replace('500 tkr+', '500k kr+').replace(/(\d),(\d)/g, '$1.$2');
+const OUTCOME = { PRIS: 'Price', MANUELL: 'Needs a person', AVSLAG: 'No price' };
+const esc = s => String(s).replace(/[&<>]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
+const j = async u => (await fetch(u)).json();
+
+document.querySelectorAll('#tabs button').forEach(b => b.onclick = () => {
+  document.querySelectorAll('#tabs button').forEach(x => x.classList.toggle('on', x === b));
+  ['quote','batch','model'].forEach(t => $('#'+t).hidden = t !== b.dataset.t);
+  if (b.dataset.t === 'model' && !$('#modelOut').innerHTML) loadModel();
+});
+
+function fchip(f) {
+  if (f == null) return '';
+  const r = Math.round((f - 1) * 100), cls = r > 2 ? 'up' : r < -2 ? 'down' : 'flat';
+  return `<span class="f ${cls}">${r > 0 ? '+' : r < 0 ? '−' : ''}${Math.abs(r)} %</span>`;
+}
+
+function render(d) {
+  const label = OUTCOME[d.utfall];
+  let h = `<div class="card result ${d.utfall}"><span class="tag">${label}</span>`;
+  h += d.pris != null ? `<div class="price">${kr(d.pris)} <small>per year</small></div>` : `<h2 style="margin-top:10px">${esc(d.rubrik)}</h2>`;
+  h += `<p style="margin:6px 0 0">${esc(d.meddelande)}</p>`;
+  if (d.indata?.avvikelse) h += `<div class="warnbox">Where we got your crash history: ${d.indata.kallor.map(k => `${esc(k.kalla)}: <b>${k.antal}</b>`).join(' · ')}. We use the higher number to be safe.</div>`;
+  h += `</div>`;
+  if (d.utfall === 'PRIS') {
+    const u = d.uppbyggnad, tot = u.forvantadKostnad || 1;
+    const diff = d.pris - d.bas.pris, top = [...d.uppdelning].sort((a, b) => Math.abs(b.kr) - Math.abs(a.kr))[0];
+    const sg = x => (x > 0 ? '+' : x < 0 ? '−' : '') + kr(Math.abs(x));
+    h += `<div class="card"><h2>Från basbelopp till din premie</h2>
+      <p>En typisk kund utan krockar (${d.bas.kund.alder} år, bil värd ${kr(d.bas.kund.varde)}, ${d.bas.kund.hk} hk, ${esc(d.bas.kund.drivmedel)}) betalar <b>${kr(d.bas.pris)}</b> per år. Du betalar <b>${kr(Math.abs(diff))} ${diff >= 0 ? 'mer' : 'mindre'}</b>${top && Math.abs(top.kr) >= 50 ? ', främst på grund av ' + top.namn.toLowerCase() : ''}.</p>
+      <table><tr><th>Post</th><th class="n">Belopp</th></tr>
+      <tr><td>Basbelopp</td><td class="n">${kr(d.bas.pris)}</td></tr>
+      ${d.uppdelning.map(x => `<tr><td>${x.namn}</td><td class="n">${sg(x.kr)}</td></tr>`).join('')}
+      <tr><td><b>Din premie</b></td><td class="n"><b>${kr(d.pris)}</b></td></tr></table>
+      <p class="mut">Beloppen fördelas rättvist mellan faktorerna (Shapley-metoden) och summerar exakt till din premie. Basbeloppet är ett räknat pris för en typisk kund, inte ett genomsnitt av verkliga priser.</p></div>`;
+    h += `<div class="grid"><div class="card"><h2>Why is the price what it is?</h2>
+      <table><tr><th>Factor</th><th>Details</th><th class="n">Effect on price</th></tr>
+      ${d.drivare.map(x => `<tr><td><b>${x.namn}</b></td><td>${esc(x.text)}</td><td class="n">${fchip(x.faktor)}</td></tr>`).join('')}</table>
+      <p class="mut">Red means this factor makes your price higher than for an average customer. Green means it makes it lower. Gender is <b>not</b> used (it has been banned in EU insurance pricing since 2012).</p></div>
+      <div class="card"><h2>From risk to price</h2>
+        <div class="bar"><i style="width:${u.krockkostnad/tot*100}%;background:#14213d"></i><i style="width:${u.smaskador/tot*100}%;background:#e8a23d"></i></div>
+        <table>
+          <tr><td>Crashes (how often × what they cost)</td><td class="n">${kr(u.krockkostnad)}</td></tr>
+          <tr><td>Theft, fire and glass damage</td><td class="n">${kr(u.smaskador)}</td></tr>
+          <tr><td><b>Expected claims cost per year</b></td><td class="n"><b>${kr(u.forvantadKostnad)}</b></td></tr>
+          <tr><td>Adjusted so that about ${Math.round(u.malSkadekvot*100)}% of what you pay covers claims (the rest covers running costs and profit)</td><td class="n">${kr(u.ratPris)}</td></tr>
+          ${u.minAvgransad ? `<tr><td>Minimum price</td><td class="n">${kr(u.minPremie)}</td></tr>` : ''}
+          <tr><td><b>Yearly price</b></td><td class="n"><b>${kr(d.pris)}</b></td></tr></table>
+        ${d.utanKrockar ? `<p class="mut">With no crash history: <b>${kr(d.utanKrockar)}</b> per year.</p>` : ''}
+        <p class="mut">${esc(d.indata.bil.marke)} ${esc(d.indata.bil.modell)} ${d.indata.bil.arsmodell} · ${d.indata.alder} yrs old · ${esc(d.indata.ort)}</p></div></div>`;
+  }
+  h += `<div class="card"><h2>Where the data came from</h2><table><tr><th>Source</th><th>Request</th><th class="n">Status</th><th class="n">Time (ms)</th></tr>
+    ${d.anrop.map(a => `<tr><td>${a.api}</td><td><code>${esc(a.url)}</code></td><td class="n">${a.status}</td><td class="n">${a.ms}</td></tr>`).join('')}</table>
+    <p class="mut">These sources are simulated in this demo. In the real service they would be replaced by the population register (SPAR), the Swedish Transport Agency and the crime statistics office (BRÅ).</p></div>`;
+  $('#out').innerHTML = h;
+}
+
+async function run() {
+  const p = new URLSearchParams({ personnummer: $('#pnr').value, regnummer: $('#reg').value });
+  if ($('#krockar').value !== '') p.set('krockar', $('#krockar').value);
+  $('#out').innerHTML = '<div class="card mut">Calculating…</div>';
+  render(await j('/api/quote?' + p));
+}
+$('#form').onsubmit = e => { e.preventDefault(); run(); };
+
+function fill(a) { $('#pnr').value = a.personnummer; $('#reg').value = a.regnummer; $('#krockar').value = a.krockar ?? ''; run(); }
+
+(async () => {
+  const apps = await j('/api/ansokningar');
+  $('#app').innerHTML = '<option value="">– choose –</option>' + apps.map((a, i) => `<option value="${i}">#${a.id} · ${a.personnummer} · ${a.regnummer}</option>`).join('');
+  $('#app').onchange = e => e.target.value !== '' && fill(apps[e.target.value]);
+  const demos = await j('/api/demo');
+  $('#demos').innerHTML = demos.map((d, i) => `<button class="chip" data-i="${i}">${d.namn}</button>`).join(' ');
+  $('#demos').onclick = e => { const i = e.target.dataset.i; if (i != null) fill({ ...demos[i], krockar: '' }); };
+})();
+
+$('#runBatch').onclick = async () => {
+  $('#batchInfo').textContent = 'Running…'; const t0 = performance.now();
+  const r = await j('/api/batch'), pr = r.filter(x => x.pris);
+  const avg = pr.reduce((s, x) => s + x.pris, 0) / pr.length;
+  $('#batchInfo').textContent = `${r.length} applications in ${Math.round(performance.now() - t0)} ms · ${pr.length} got a price (average ${kr(avg)}) · ${r.filter(x => x.utfall === 'MANUELL').length} need a person to review · ${r.filter(x => x.utfall === 'AVSLAG').length} got no price · ${r.filter(x => x.avvikelse).length} where the reported crashes did not match our records`;
+  $('#batchOut').innerHTML = `<div class="card"><table><tr><th>#</th><th>ID number</th><th>Plate</th><th>Car</th><th class="n">Age</th><th class="n">Crashes (reported)</th><th>Result</th><th class="n">Price</th></tr>
+    ${r.map(x => `<tr><td>${x.id}</td><td>${x.personnummer}</td><td>${x.regnummer}</td><td>${esc(x.bil ?? '–')}</td><td class="n">${x.alder ?? '–'}</td><td class="n">${x.krockar}${x.avvikelse ? ' ⚠' : ''}</td><td>${x.utfall === 'PRIS' ? '' : esc(OUTCOME[x.utfall])}</td><td class="n">${x.pris ? kr(x.pris) : '–'}</td></tr>`).join('')}</table></div>`;
+};
+
+async function loadModel() {
+  const m = await j('/api/model'), pc = x => (x * 100).toFixed(1) + '%';
+  let h = `<div class="card"><h2>How the price is worked out</h2>
+    <p>We estimate how much you are likely to cost us in claims each year, then add a margin for running costs and profit. Only about ${Math.round(m.malSkadekvot*100)}% of your price is meant to pay for claims.</p>
+    <ul class="mut"><li><b>How often you crash.</b> We start from the crash rate for your age group, based on ${m.underlag.kundrader.toLocaleString('en-US')} existing policies. The more of your own history we know, the more it counts.</li>
+    <li><b>What a crash costs.</b> More expensive cars cost more to fix. Engine power and fuel type also play a part.</li>
+    <li><b>Theft, fire and glass damage.</b> A small share of the car's value, adjusted for how common theft is where you live. <b>The local theft figures are estimates</b>, because our data did not include where customers live.</li>
+    <li><b>Left out on purpose:</b> gender (banned in EU insurance pricing), ethnicity, and your name.</li></ul></div>
+    <div class="card"><h2>Does it work? A test on ${m.underlag.kundrader.toLocaleString('en-US')} existing policies</h2>
+    <p>Share of premium paid out in claims: <b>${m.backtest.totalt.skadekvotIdag}</b> with today's prices, <b>${m.backtest.totalt.skadekvotNy}</b> with the new prices.
+    If every group has a similar number, prices are fair: no group is paying too much or too little. <span class="mut">Note: this test uses the same data the model learned from, so real-world results will be a bit less perfect.</span></p>
+    <div class="grid">`;
+  for (const s of m.backtest.segment) h += `<div><h3>By ${(SEG[s.segment] || s.segment).toLowerCase()}</h3><table><tr><th></th><th class="n">Policies</th><th class="n">Price today</th><th class="n">New price</th><th class="n">Claims share today</th><th class="n">Claims share new</th></tr>
+    ${s.rader.map(r => `<tr><td>${esc(GRP(r.grupp))}</td><td class="n">${r.n}</td><td class="n">${r.premieIdagPerAr}</td><td class="n">${r.premieNyPerAr}</td><td class="n">${r.skadekvotIdag}</td><td class="n">${r.skadekvotNy}</td></tr>`).join('')}</table></div>`;
+  h += `</div></div><div class="card"><h2>How often each age group crashes (per year)</h2><table><tr>${m.frekvens.bandNamn.map(n => `<th class="n">${yrs(n)}</th>`).join('')}</tr><tr>${m.frekvens.perAldersband.map(f => `<td class="n">${pc(f)}</td>`).join('')}</tr></table></div>`;
+  $('#modelOut').innerHTML = h;
+}
+</script>
+</body>
+</html>

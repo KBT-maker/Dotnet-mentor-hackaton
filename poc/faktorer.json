@@ -1,0 +1,258 @@
+{
+  "version": 1,
+  "kalibrerad": "2026-11-24T18:08:37.266Z",
+  "underlag": {
+    "kundrader": 4815,
+    "kundar": 14273,
+    "krockar": 885,
+    "total_skadekostnad": 73679379,
+    "total_premie": 82437620
+  },
+  "malSkadekvot": 0.7,
+  "minPremie": 1990,
+  "trovardighetK": 10,
+  "skala": 1.057761466339696,
+  "frekvens": {
+    "snitt": 0.062005184614306735,
+    "perAldersband": [
+      0.10843373493975904,
+      0.08347627215551744,
+      0.05491457732416241,
+      0.05771050141911069,
+      0.04824120603015075,
+      0.07165605095541401
+    ],
+    "bandNamn": [
+      "18–24 år",
+      "25–29 år",
+      "30–49 år",
+      "50–64 år",
+      "65–79 år",
+      "80+ år"
+    ]
+  },
+  "smaskador": {
+    "perDrivmedel": {
+      "bensin": 0.005028855315739824,
+      "el": 0.0030384935106380242,
+      "hybrid": 0.00478029264859687,
+      "diesel": 0.005030378055625381
+    },
+    "snitt": 0.004556060365586402
+  },
+  "allvar": {
+    "a": 6.111764407150523,
+    "b": 0.3991150329240899,
+    "hk": {
+      "0": 1.0313840519858715,
+      "1": 1.2541063697428074,
+      "2": 1.257983046103551,
+      "3": 1.1116209417756135,
+      "4": 1.6158087687764655
+    },
+    "drivmedel": {
+      "bensin": 0.9489435839543253,
+      "el": 1.1538074989206197,
+      "hybrid": 1.0241188205120766,
+      "diesel": 1.0256538818545473
+    },
+    "hkNamn": [
+      "<100 hk",
+      "100–199 hk",
+      "200–299 hk",
+      "300–399 hk",
+      "400+ hk"
+    ]
+  },
+  "regionSnittIdx": 1,
+  "backtest": {
+    "totalt": {
+      "skadekvotIdag": 0.89,
+      "skadekvotNy": 0.7
+    },
+    "segment": [
+      {
+        "segment": "Ålder",
+        "rader": [
+          {
+            "grupp": "80+ år",
+            "n": 188,
+            "premieIdagPerAr": 5358,
+            "premieNyPerAr": 7875,
+            "skadekostnadPerAr": 5651,
+            "skadekvotIdag": 1.05,
+            "skadekvotNy": 0.72
+          },
+          {
+            "grupp": "65–79 år",
+            "n": 332,
+            "premieIdagPerAr": 5620,
+            "premieNyPerAr": 5841,
+            "skadekostnadPerAr": 3315,
+            "skadekvotIdag": 0.59,
+            "skadekvotNy": 0.57
+          },
+          {
+            "grupp": "50–64 år",
+            "n": 317,
+            "premieIdagPerAr": 5893,
+            "premieNyPerAr": 6960,
+            "skadekostnadPerAr": 6278,
+            "skadekvotIdag": 1.07,
+            "skadekvotNy": 0.9
+          },
+          {
+            "grupp": "30–49 år",
+            "n": 2950,
+            "premieIdagPerAr": 5924,
+            "premieNyPerAr": 6844,
+            "skadekostnadPerAr": 4583,
+            "skadekvotIdag": 0.77,
+            "skadekvotNy": 0.67
+          },
+          {
+            "grupp": "25–29 år",
+            "n": 601,
+            "premieIdagPerAr": 5754,
+            "premieNyPerAr": 9849,
+            "skadekostnadPerAr": 7295,
+            "skadekvotIdag": 1.27,
+            "skadekvotNy": 0.74
+          },
+          {
+            "grupp": "18–24 år",
+            "n": 427,
+            "premieIdagPerAr": 4568,
+            "premieNyPerAr": 10286,
+            "skadekostnadPerAr": 7382,
+            "skadekvotIdag": 1.62,
+            "skadekvotNy": 0.72
+          }
+        ]
+      },
+      {
+        "segment": "Drivmedel",
+        "rader": [
+          {
+            "grupp": "bensin",
+            "n": 1533,
+            "premieIdagPerAr": 4503,
+            "premieNyPerAr": 5433,
+            "skadekostnadPerAr": 3291,
+            "skadekvotIdag": 0.73,
+            "skadekvotNy": 0.61
+          },
+          {
+            "grupp": "el",
+            "n": 889,
+            "premieIdagPerAr": 7543,
+            "premieNyPerAr": 10687,
+            "skadekostnadPerAr": 9031,
+            "skadekvotIdag": 1.2,
+            "skadekvotNy": 0.85
+          },
+          {
+            "grupp": "hybrid",
+            "n": 1030,
+            "premieIdagPerAr": 7205,
+            "premieNyPerAr": 9069,
+            "skadekostnadPerAr": 6314,
+            "skadekvotIdag": 0.88,
+            "skadekvotNy": 0.7
+          },
+          {
+            "grupp": "diesel",
+            "n": 1363,
+            "premieIdagPerAr": 5590,
+            "premieNyPerAr": 7185,
+            "skadekostnadPerAr": 4922,
+            "skadekvotIdag": 0.88,
+            "skadekvotNy": 0.69
+          }
+        ]
+      },
+      {
+        "segment": "Bilens värde",
+        "rader": [
+          {
+            "grupp": "100–250 tkr",
+            "n": 1983,
+            "premieIdagPerAr": 5792,
+            "premieNyPerAr": 7758,
+            "skadekostnadPerAr": 5168,
+            "skadekvotIdag": 0.89,
+            "skadekvotNy": 0.67
+          },
+          {
+            "grupp": "250–500 tkr",
+            "n": 1412,
+            "premieIdagPerAr": 8722,
+            "premieNyPerAr": 10995,
+            "skadekostnadPerAr": 7623,
+            "skadekvotIdag": 0.87,
+            "skadekvotNy": 0.69
+          },
+          {
+            "grupp": "<100 tkr",
+            "n": 1266,
+            "premieIdagPerAr": 3672,
+            "premieNyPerAr": 4383,
+            "skadekostnadPerAr": 2916,
+            "skadekvotIdag": 0.79,
+            "skadekvotNy": 0.67
+          },
+          {
+            "grupp": "500 tkr+",
+            "n": 154,
+            "premieIdagPerAr": 15616,
+            "premieNyPerAr": 20443,
+            "skadekostnadPerAr": 24041,
+            "skadekvotIdag": 1.54,
+            "skadekvotNy": 1.18
+          }
+        ]
+      },
+      {
+        "segment": "Krockar per år hos oss",
+        "rader": [
+          {
+            "grupp": "0",
+            "n": 4086,
+            "premieIdagPerAr": 5810,
+            "premieNyPerAr": 5775,
+            "skadekostnadPerAr": 780,
+            "skadekvotIdag": 0.13,
+            "skadekvotNy": 0.14
+          },
+          {
+            "grupp": "0,25–0,5",
+            "n": 240,
+            "premieIdagPerAr": 5767,
+            "premieNyPerAr": 14810,
+            "skadekostnadPerAr": 22677,
+            "skadekvotIdag": 3.93,
+            "skadekvotNy": 1.53
+          },
+          {
+            "grupp": "<0,25",
+            "n": 223,
+            "premieIdagPerAr": 5147,
+            "premieNyPerAr": 8881,
+            "skadekostnadPerAr": 8709,
+            "skadekvotIdag": 1.69,
+            "skadekvotNy": 0.98
+          },
+          {
+            "grupp": "≥0,5",
+            "n": 266,
+            "premieIdagPerAr": 7083,
+            "premieNyPerAr": 23337,
+            "skadekostnadPerAr": 54544,
+            "skadekvotIdag": 7.7,
+            "skadekvotNy": 2.34
+          }
+        ]
+      }
+    ]
+  }
+}
